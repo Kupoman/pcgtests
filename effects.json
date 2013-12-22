@@ -1,0 +1,90 @@
+[
+    {
+        "value": 1.0, 
+        "apply_func": "apply_stat", 
+        "remove_func": "remove_stat", 
+        "tick_func": "tick_stat", 
+        "stat": "defense", 
+        "name": "Defense+"
+    }, 
+    {
+        "value": -1.0, 
+        "apply_func": "apply_stat", 
+        "remove_func": "remove_stat", 
+        "tick_func": "tick_stat", 
+        "stat": "defense", 
+        "name": "Defense-"
+    }, 
+    {
+        "value": 10.0, 
+        "apply_func": "apply_stat", 
+        "remove_func": "remove_stat", 
+        "tick_func": "tick_dot", 
+        "stat": "hp", 
+        "name": "HP+"
+    }, 
+    {
+        "value": -10.0, 
+        "apply_func": "apply_stat", 
+        "remove_func": "remove_stat", 
+        "tick_func": "tick_dot", 
+        "stat": "hp", 
+        "name": "HP-"
+    }, 
+    {
+        "value": 1.0, 
+        "apply_func": "apply_stat", 
+        "remove_func": "remove_stat", 
+        "tick_func": "tick_stat", 
+        "stat": "magic", 
+        "name": "Magic+"
+    }, 
+    {
+        "value": -1.0, 
+        "apply_func": "apply_stat", 
+        "remove_func": "remove_stat", 
+        "tick_func": "tick_dot", 
+        "stat": "magic", 
+        "name": "Magic-"
+    }, 
+    {
+        "value": 10.0, 
+        "apply_func": "apply_stat", 
+        "remove_func": "remove_stat", 
+        "tick_func": "tick_dot", 
+        "stat": "mana", 
+        "name": "Mana+"
+    }, 
+    {
+        "value": 1, 
+        "apply_func": "apply_stat", 
+        "remove_func": "remove_stat", 
+        "tick_func": "tick_stat", 
+        "stat": "", 
+        "name": "Shield"
+    }, 
+    {
+        "value": 1.0, 
+        "apply_func": "apply_stat", 
+        "remove_func": "remove_stat", 
+        "tick_func": "tick_stat", 
+        "stat": "speed", 
+        "name": "Speed+"
+    }, 
+    {
+        "value": -1.0, 
+        "apply_func": "apply_stat", 
+        "remove_func": "remove_stat", 
+        "tick_func": "tick_stat", 
+        "stat": "speed", 
+        "name": "Speed-"
+    }, 
+    {
+        "value": 1, 
+        "apply_func": "apply_stat", 
+        "remove_func": "remove_stat", 
+        "tick_func": "tick_stat", 
+        "stat": "", 
+        "name": "Stop"
+    }
+]
