@@ -12,11 +12,11 @@ class EffectData:
 		self.tick = getattr(self, tick_func)
 
 	def apply_stat(self, character, points):
-		val = getattr(character, self._stat) + self._value * points
+		val = getattr(character, self._stat) + self.value * points
 		setattr(character, self._stat, val)
 
 	def remove_stat(self, character, points):
-		val = getattr(character, self._stat) - self._value * points
+		val = getattr(character, self._stat) - self.value * points
 		setattr(character, self._stat, val)
 
 	def tick_stat(self, character, points):
@@ -60,6 +60,6 @@ class EffectFactory:
 		for effect in elist:
 			self._effects[effect['name']] = EffectData(**effect)
 
-	def create_effect(self, name, points, duration):
+	def create_effect(self, name="HP-", points=1, duration=0):
 		data = self._effects[name]
 		return Effect(data, points, duration)

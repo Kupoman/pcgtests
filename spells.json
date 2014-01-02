@@ -1,0 +1,13 @@
+[
+    {
+        "effects": [
+            {
+                "duration": 0, 
+                "points": 100, 
+                "name": "HP-"
+            }
+        ], 
+        "name": "attack", 
+        "costs": []
+    }
+]
