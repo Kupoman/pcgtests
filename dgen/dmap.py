@@ -19,11 +19,17 @@ class DungeonMap:
 					color = (0, 0, 0)
 
 				self._img_data.append(color)
-				
-	def valid_tile(self, x, y):
-		x = int(x-2.0) + self._img_width/2
-		y = int(y+2.0) + self._img_height/2
-		return self._bsp_data[int(y)][int(x)] != '.'
+
+	def tile_to_world(self, tile_pos):
+		return (tile_pos[0] - self._img_height / 2, tile_pos[1] - self._img_width / 2)
+
+	def world_to_tile(self, world_pos):
+		return (world_pos[0] + self._img_width / 2, world_pos[1] + self._img_height / 2)
+
+	def valid_tile(self, tile_pos):
+		tile = self._bsp_data[int(tile_pos[1])][int(tile_pos[0])]
+		#print(tile)
+		return tile != '.'
 
 _map = None
 
