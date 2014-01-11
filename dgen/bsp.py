@@ -1,5 +1,6 @@
 from collections import namedtuple
 import random
+import dfs
 
 MIN_ROOM_X = 5
 MIN_ROOM_Y = 5
@@ -81,6 +82,13 @@ def gen(sw, sh):
         pick = dungeon[starty][startx]
 
     dungeon[starty][startx] = '*'
+
+    # Connected components
+    #ccl = dfs.dfs(dungeon)
+    #print(len(ccl))
+    #for cc in ccl:
+    #    for tile in cc:
+    #        dungeon[tile.coord[0]][tile.coord[1]] = str(tile.cc)
     
     return dungeon
 
