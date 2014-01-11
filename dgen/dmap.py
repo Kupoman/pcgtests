@@ -1,5 +1,6 @@
 import bge
 import bgl
+import random
 
 class DungeonMap:
 	def __init__(self, bsp_data):
@@ -7,6 +8,9 @@ class DungeonMap:
 		self._img_data = []
 		self._img_height = len(bsp_data)
 		self._img_width = len(bsp_data[0])
+
+		self.telemap = {}
+		self.telecolors = {}
 
 		for y in range(len(bsp_data)):
 			for x in range(len(bsp_data[y])):
@@ -31,6 +35,13 @@ class DungeonMap:
 		#print(tile)
 		return tile != '.'
 
+	def add_teleporter(self, tile_pos):
+			telenum = self._bsp_data[int(tile_pos[1])][int(tile_pos[0])]
+			if telenum not in self.telecolors:
+				self.telecolors[telenum] = (random.random(), random.random(), random.random(), 1.0)
+
+			return self.telecolors[telenum]
+                    
 _map = None
 
 def init(bsp_data):
