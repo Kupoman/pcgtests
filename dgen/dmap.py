@@ -22,6 +22,10 @@ class DungeonMap:
 				elif tile.isdigit():
 					if tile not in self.telecolors:
 						self.telecolors[tile] = (random.random(), random.random(), random.random(), 1.0)
+					if tile not in self.telemap:
+						self.telemap[tile] = [(x, y)]
+					else:
+						self.telemap[tile].append((x, y))
 
 					color = [int(i*255) for i in self.telecolors[tile][:3]]
 				else:
@@ -34,6 +38,20 @@ class DungeonMap:
 
 	def world_to_tile(self, world_pos):
 		return (world_pos[0] + self._img_width / 2, world_pos[1] + self._img_height / 2)
+
+	def is_teleporter(self, tile_pos):
+		return self._bsp_data[int(tile_pos[1])][int(tile_pos[0])].isdigit()
+
+	def get_teleporter_loc(self, tile_pos):
+		tile = self._bsp_data[int(tile_pos[1])][int(tile_pos[0])]
+		teleloc = tile_pos
+		if tile in self.telemap:
+			for i in self.telemap[tile]:
+				if tile_pos[0] != i[0] and tile_pos[1] != i[1]:
+					teleloc = i
+					break
+
+		return teleloc
 
 	def valid_tile(self, tile_pos):
 		tile = self._bsp_data[int(tile_pos[1])][int(tile_pos[0])]

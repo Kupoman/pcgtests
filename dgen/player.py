@@ -11,6 +11,7 @@ class Player:
 		self.move_factor = 1
 		self.last_move = None
 		self._obj = kxobj
+		self.is_teleporting = False
 
 		cam = bge.logic.getCurrentScene().active_camera
 		self.orig_cam = cam.worldPosition.copy()
@@ -49,6 +50,14 @@ def update(cont):
 
 		if player.move_factor == player.MOVE_TIME:
 			player.tile_position = player.tile_target
+
+			if not player.is_teleporting and dmap.is_teleporter(player.tile_target):
+				player.tile_target = mathutils.Vector(dmap.get_teleporter_loc(player.tile_target))
+				player.move_factor = 0
+				player.is_teleporting = True
+			else:
+				player.is_teleporting = False
+
 	if player.move_factor >= player.MOVE_TIME:	
 		events = bge.logic.keyboard.events
 		target_tile = player.tile_position.copy()
