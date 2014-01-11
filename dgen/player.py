@@ -11,6 +11,11 @@ class Player:
 		self.move_factor = 1
 		self.last_move = None
 		self._obj = kxobj
+
+		cam = bge.logic.getCurrentScene().active_camera
+		self.orig_cam = cam.worldPosition.copy()
+		cam.worldPosition.xy = self.orig_cam.xy + self._obj.worldPosition.xy
+		self.cam_target = None
 		
 		
 def init(cont):
@@ -23,6 +28,10 @@ def update(cont):
 	main = bge.logic.getCurrentScene().objects["Main"]
 	dmap = main["dmap"]
 	player = main["player"]
+	cam = bge.logic.getCurrentScene().active_camera
+
+	if player.cam_target:
+		cam.worldPosition.xy = cam.worldPosition.xy.lerp(player.cam_target, 0.1)
 
 	if player.move_factor < player.MOVE_TIME:
 		#print("Move to", player.tile_target, "from", player.tile_position)
@@ -35,6 +44,8 @@ def update(cont):
 		vworld = mathutils.Vector(dmap.tile_to_world(player.tile_target))
 
 		cont.owner.worldPosition.xy = kworld.lerp(vworld, player.move_factor/player.MOVE_TIME)
+
+		player.cam_target = player.orig_cam.xy + player._obj.worldPosition.xy
 
 		if player.move_factor == player.MOVE_TIME:
 			player.tile_position = player.tile_target
