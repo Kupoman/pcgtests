@@ -12,7 +12,7 @@ def dfs(dmap):
 
     for iy, vy in enumerate(dmap):
         for ix, vy in enumerate(vy):
-            if vy == '#':
+            if vy in ('#', '$'):
                 coord = (iy, ix)
                 G[coord] = V(0, vy, coord, -1)
 
@@ -29,13 +29,13 @@ def dfs_visit(dmap, G, V, cc):
     def adj(dmap, G, V):
         vl = []
 
-        if dmap[V.coord[0] + 1][V.coord[1]] == '#':
+        if dmap[V.coord[0] + 1][V.coord[1]] in ('#', '$'):
             vl.append(G[(V.coord[0] + 1, V.coord[1])])
-        if dmap[V.coord[0]][V.coord[1] + 1] == '#':
+        if dmap[V.coord[0]][V.coord[1] + 1] in ('#', '$'):
             vl.append(G[(V.coord[0], V.coord[1] + 1)])
-        if dmap[V.coord[0] - 1][V.coord[1]] == '#':
+        if dmap[V.coord[0] - 1][V.coord[1]] in ('#', '$'):
             vl.append(G[(V.coord[0] - 1, V.coord[1])])
-        if dmap[V.coord[0]][V.coord[1] - 1] == '#':
+        if dmap[V.coord[0]][V.coord[1] - 1] in ('#', '$'):
             vl.append(G[(V.coord[0], V.coord[1] - 1)])
 
         return vl

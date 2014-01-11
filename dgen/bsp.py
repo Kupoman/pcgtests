@@ -44,6 +44,10 @@ def gen(sw, sh):
             for x in range(room.x, room.sw):
                 dungeon[y][x] = '#'
                 num_tiles += 1
+        # Mutate one tile into an encounter
+        y = int((room.sh - room.y) * random.gauss(0.5, 0.1) + room.y)
+        x = int((room.sw - room.x) * random.gauss(0.5, 0.1) + room.x)
+        dungeon[y][x] = '$'
 
     # Erosion
     # Remove x% of tiles
@@ -54,7 +58,7 @@ def gen(sw, sh):
         ry = random.randint(0, sh - 1)
 
         tile = dungeon[ry][rx]
-        if tile != '#':
+        if tile not in ('#', '$'):
             continue
 
         factor = 0.5
@@ -93,7 +97,7 @@ def gen(sw, sh):
         tile = '.'
         coord = None
 
-        while tile != '#':
+        while tile not in ('#', '$'):
             x = random.choice(cc)
             tile = x.tile
             coord = x.coord

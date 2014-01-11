@@ -17,6 +17,8 @@ class DungeonMap:
 				tile = bsp_data[y][x]
 				if tile == '#':
 					color = (255, 255, 255)
+				elif tile == '$':
+					color = (128, 128, 128)
 				elif tile == '*':
 					color = (255, 0, 0)
 				elif tile.isdigit():
