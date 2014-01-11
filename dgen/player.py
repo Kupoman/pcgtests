@@ -3,7 +3,7 @@ import time
 import mathutils
 
 class Player:
-	MOVE_TIME = 0.3
+	MOVE_TIME = 0.1
 
 	def __init__(self, kxobj):
 		self.tile_target = None
@@ -27,7 +27,8 @@ def update(cont):
 	if player.move_factor < player.MOVE_TIME:
 		#print("Move to", player.tile_target, "from", player.tile_position)
 		player.move_factor += time.time() - player.last_move
-		if player.move_factor > player.MOVE_TIME:
+		player.last_move = time.time()
+		if player.move_factor > player.MOVE_TIME or player.move_factor / player.MOVE_TIME > 0.95:
 			player.move_factor = player.MOVE_TIME
 		
 		kworld = mathutils.Vector(dmap.tile_to_world(player.tile_position))
