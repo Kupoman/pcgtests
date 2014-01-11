@@ -87,7 +87,35 @@ def gen(sw, sh):
     cc = random.choice(ccl)
     coord = random.choice(cc).coord
     dungeon[coord[0]][coord[1]] = '*'
-    
+
+    # Place teleporters
+    def find_coord(cc):
+        tile = '.'
+        coord = None
+
+        while tile != '#':
+            x = random.choice(cc)
+            tile = x.tile
+            coord = x.coord
+
+        return coord
+
+    telcounter = 0
+    islands = ccl[:]
+    for cc in ccl:
+        for other in islands:
+            if other == cc:
+                continue
+            c1 = find_coord(cc)
+            c2 = find_coord(other)
+
+            dungeon[c1[0]][c1[1]] = str(telcounter)
+            dungeon[c2[0]][c2[1]] = str(telcounter)
+
+            telcounter += 1
+
+        islands.remove(cc)
+
     return dungeon
 
 if __name__ == '__main__':
