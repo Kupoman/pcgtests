@@ -71,24 +71,22 @@ def gen(sw, sh):
             dungeon[ry][rx] = '.'
             remaining -= 1
 
-    # Pick a start tile
-    pick = '.'
-    startx = 0
-    starty = 0
-    while pick != '#':
-        startx = random.randint(0, sw - 1)
-        starty = random.randint(0, sh - 1)
-
-        pick = dungeon[starty][startx]
-
-    dungeon[starty][startx] = '*'
-
     # Connected components
-    #ccl = dfs.dfs(dungeon)
+    ccl = dfs.dfs(dungeon)
     #print(len(ccl))
     #for cc in ccl:
     #    for tile in cc:
     #        dungeon[tile.coord[0]][tile.coord[1]] = str(tile.cc)
+
+    # Remove islands that are too small
+    for cc in ccl[:]:
+        if len(cc) < 5:
+            ccl.remove(cc)
+
+    # Pick a start tile
+    cc = random.choice(ccl)
+    coord = random.choice(cc).coord
+    dungeon[coord[0]][coord[1]] = '*'
     
     return dungeon
 
