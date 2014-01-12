@@ -1,6 +1,7 @@
 from collections import namedtuple
 import random
-import dfs
+
+import scripts.dfs as dfs
 
 MIN_ROOM_X = 5
 MIN_ROOM_Y = 5
