@@ -2,6 +2,8 @@ import bge
 import time
 import mathutils
 
+ENCOUNTER_DISTANCE = 4
+
 class Player:
 	MOVE_TIME = 0.1
 
@@ -77,4 +79,13 @@ def update(cont):
 			player.tile_target = target_tile
 			player.move_factor = 0
 			player.last_move = time.time()
+
+	# Check encounters
+	for i in main["encounters"][:]:
+		d2 = (player._obj.worldPosition - i.worldPosition).length_squared
+
+		if d2 < ENCOUNTER_DISTANCE**2:
+			print("Encounter!")
+			main["encounters"].remove(i)
+			i.endObject()
 
