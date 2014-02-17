@@ -2,7 +2,7 @@ import bge
 import time
 import mathutils
 
-ENCOUNTER_DISTANCE = 4
+ENCOUNTER_DISTANCE = 1.25
 
 class Player:
 	MOVE_TIME = 0.1
@@ -25,10 +25,15 @@ def init(cont):
 	main = bge.logic.getCurrentScene().objects["Main"]
 	main["player"] = Player(cont.owner)
 	main["player"].tile_position = mathutils.Vector(main["player_start_loc"])
+	main["encounter_scene"] = False
 
 
 def update(cont):
 	main = bge.logic.getCurrentScene().objects["Main"]
+
+	if main["encounter_scene"]:
+		return
+
 	dmap = main["dmap"]
 	player = main["player"]
 	cam = bge.logic.getCurrentScene().active_camera
@@ -88,4 +93,5 @@ def update(cont):
 			print("Encounter!")
 			main["encounters"].remove(i)
 			i.endObject()
-
+			bge.logic.addScene("Combat")
+			main["encounter_scene"] = True
