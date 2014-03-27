@@ -24,7 +24,7 @@ class Player:
 def init(cont):
 	main = bge.logic.getCurrentScene().objects["Main"]
 	main["player"] = Player(cont.owner)
-	main["player"].tile_position = mathutils.Vector(main["player_start_loc"])
+	main["player"].tile_position = mathutils.Vector(main["dmap"].player_start_loc)
 	main["encounter_scene"] = False
 
 
@@ -86,12 +86,12 @@ def update(cont):
 			player.last_move = time.time()
 
 	# Check encounters
-	for i in main["encounters"][:]:
+	for i in dmap.encounters[:]:
 		d2 = (player._obj.worldPosition - i.worldPosition).length_squared
 
 		if d2 < ENCOUNTER_DISTANCE**2:
 			print("Encounter!")
-			main["encounters"].remove(i)
+			dmap.encounters.remove(i)
 			i.endObject()
 			bge.logic.addScene("Combat")
 			main["encounter_scene"] = True

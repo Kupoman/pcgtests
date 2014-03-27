@@ -1,9 +1,15 @@
 import bge
 import bgl
 import random
+from mathutils import Vector
+
+from . import bsp
+from . import engine
+
 
 class DungeonMap:
-	def __init__(self, bsp_data):
+	def __init__(self, sw, sh):
+		bsp_data = bsp.gen(sw, sh)
 		self._bsp_data = bsp_data
 		self._img_data = []
 		self._img_height = len(bsp_data)
@@ -11,27 +17,41 @@ class DungeonMap:
 
 		self.telemap = {}
 		self.telecolors = {}
+		self.encounters = []
+		self.player_start_loc = (0, 0)
 
 		for y in range(len(bsp_data)):
 			for x in range(len(bsp_data[y])):
 				tile = bsp_data[y][x]
-				if tile == '#':
-					color = (255, 255, 255)
-				elif tile == '$':
-					color = (128, 128, 128)
-				elif tile == '*':
-					color = (255, 0, 0)
-				elif tile.isdigit():
-					if tile not in self.telecolors:
-						self.telecolors[tile] = (random.random(), random.random(), random.random(), 1.0)
-					if tile not in self.telemap:
-						self.telemap[tile] = [(x, y)]
-					else:
-						self.telemap[tile].append((x, y))
 
-					color = [int(i*255) for i in self.telecolors[tile][:3]]
-				else:
-					color = (0, 0, 0)
+				color = (0, 0, 0)
+				if tile in ('#', '*', '$') or tile.isdigit():
+					tpos = Vector((x - sw / 2, y - sh / 2, -random.random() * 0.1))
+					engine.add_object("DungeonTile", tpos)
+
+					if tile == '#':
+						color = (255, 255, 255)
+					elif tile == '$':
+						color = (128, 128, 128)
+						enc = engine.add_object("MonsterSpawn", tpos + Vector((0, 0, 1.75)))
+						self.encounters.append(enc)
+					elif tile == '*':
+						color = (255, 0, 0)
+						self.player_start_loc = (x, y)
+						engine.add_object("PlayerStart", (tpos.x, tpos.y, 0.75))
+						engine.add_object("Player", (tpos.x, tpos.y, 0.75))
+					elif tile.isdigit():
+						if tile not in self.telecolors:
+							self.telecolors[tile] = (random.random(), random.random(), random.random(), 1.0)
+						if tile not in self.telemap:
+							self.telemap[tile] = [(x, y)]
+						else:
+							self.telemap[tile].append((x, y))
+
+						color = [int(i*255) for i in self.telecolors[tile][:3]]
+
+						tele = engine.add_object("Teleporter", (tpos.x, tpos.y, 0.75))
+						tele.color = self.telecolors[tile]
 
 				self._img_data.append(color)
 
@@ -60,15 +80,18 @@ class DungeonMap:
 		#print(tile)
 		return tile != '.'
 
-	def add_teleporter(self, tile_pos):
-		telenum = self._bsp_data[int(tile_pos[1])][int(tile_pos[0])]
-		return self.telecolors[telenum]
-                    
+
 _map = None
 
-def init(bsp_data):
-	_map = DungeonMap(bsp_data)
-	return _map
+
+def init(cont):
+	global _map
+	main = cont.owner
+	_map = DungeonMap(50, 50)
+
+	main["dmap"] = _map
+
+
 
 def minimap_add(cont):
 	global _map
