@@ -1,40 +1,90 @@
 from collections import namedtuple
 import random
 
-import scripts.dfs as dfs
 
-MIN_ROOM_X = 5
-MIN_ROOM_Y = 5
+class V:
+    __slots__ = "vstate", "tile", "coord", "cc"
 
-EROSION = 0.1
+    def __init__(self, vstate, tile, coord, cc):
+        self.vstate = vstate
+        self.tile = tile
+        self.coord = coord
+        self.cc = cc
+
+
+def dfs(dmap):
+    G = {}
+
+    for iy, vy in enumerate(dmap):
+        for ix, vy in enumerate(vy):
+            if vy in ('#', '$'):
+                coord = (iy, ix)
+                G[coord] = V(0, vy, coord, -1)
+
+    cc = 0
+    connected_components = []
+    for v in G.values():
+        if v.vstate == 0:
+            connected_components.append(dfs_visit(dmap, G, v, cc))
+            cc += 1
+
+    return connected_components
+
+
+def dfs_visit(dmap, G, V, cc):
+    def adj(dmap, G, V):
+        vl = []
+
+        if dmap[V.coord[0] + 1][V.coord[1]] in ('#', '$'):
+            vl.append(G[(V.coord[0] + 1, V.coord[1])])
+        if dmap[V.coord[0]][V.coord[1] + 1] in ('#', '$'):
+            vl.append(G[(V.coord[0], V.coord[1] + 1)])
+        if dmap[V.coord[0] - 1][V.coord[1]] in ('#', '$'):
+            vl.append(G[(V.coord[0] - 1, V.coord[1])])
+        if dmap[V.coord[0]][V.coord[1] - 1] in ('#', '$'):
+            vl.append(G[(V.coord[0], V.coord[1] - 1)])
+
+        return vl
+
+    retval = []
+
+    V.vstate = 1
+    for v in adj(dmap, G, V):
+        if v.vstate == 0:
+            retval += dfs_visit(dmap, G, v, cc)
+
+    V.cc = cc
+    V.vstate = 2
+    return retval + [V]
+
 
 Room = namedtuple('Room', 'x y sw sh')
 
 
-def split(startx, starty, endx, endy):
+def split(startx, starty, endx, endy, min_room_x, min_room_y):
     rangex = endx - startx
     rangey = endy - starty
 
-    if rangex <= MIN_ROOM_X * 2 or rangey <= MIN_ROOM_Y * 2:
+    if rangex <= min_room_x * 2 or rangey <= min_room_y * 2:
         return [Room(startx, starty, endx, endy)]
     
     if rangex > rangey:
         # Split x
         part = random.randint(int(rangex * 0.25), int(rangex * 0.75))
-        return split(startx, starty, startx + part, endy) + \
-            split(startx + part, starty, endx, endy)
+        return split(startx, starty, startx + part, endy, min_room_x, min_room_y) + \
+            split(startx + part, starty, endx, endy, min_room_x, min_room_y)
     else:
         # Split y
         part = random.randint(int(rangey * 0.25), int(rangey * 0.75))
-        return split(startx, starty, endx, starty + part) + \
-            split(startx, starty + part, endx, endy)
+        return split(startx, starty, endx, starty + part, min_room_x, min_room_y) + \
+            split(startx, starty + part, endx, endy, min_room_x, min_room_y)
 
-def gen(sw, sh):
+def gen(sw, sh, min_room_x=5, min_room_y=5, erosion=0.1):
     # random.seed(22)
     dungeon = [['.' for _ in range(sw)] for _ in range(sh)]
     rooms = []
 
-    rooms = split(1, 1, sw - 1, sh - 1)
+    rooms = split(1, 1, sw - 1, sh - 1, min_room_x, min_room_y)
 
     # Remove half the rooms at random
     rooms = random.sample(rooms, len(rooms)//2)
@@ -52,7 +102,7 @@ def gen(sw, sh):
 
     # Erosion
     # Remove x% of tiles
-    remaining = int(num_tiles * EROSION)
+    remaining = int(num_tiles * erosion)
     #print("Eroding", remaining, "tiles")
     while remaining != 0:
         rx = random.randint(0, sw - 1)
@@ -77,7 +127,7 @@ def gen(sw, sh):
             remaining -= 1
 
     # Connected components
-    ccl = dfs.dfs(dungeon)
+    ccl = dfs(dungeon)
     #print(len(ccl))
     #for cc in ccl:
     #    for tile in cc:
