@@ -79,7 +79,7 @@ def split(startx, starty, endx, endy, min_room_x, min_room_y):
         return split(startx, starty, endx, starty + part, min_room_x, min_room_y) + \
             split(startx, starty + part, endx, endy, min_room_x, min_room_y)
 
-def gen(sw, sh, min_room_x=5, min_room_y=5, erosion=0.1):
+def gen(sw, sh, min_room_x=5, min_room_y=5, erosion=0.1, num_encounters=5):
     # random.seed(22)
     dungeon = [['.' for _ in range(sw)] for _ in range(sh)]
     rooms = []
@@ -95,6 +95,9 @@ def gen(sw, sh, min_room_x=5, min_room_y=5, erosion=0.1):
             for x in range(room.x, room.sw):
                 dungeon[y][x] = '#'
                 num_tiles += 1
+
+    # Create encounters
+    for room in random.sample(rooms, num_encounters):
         # Mutate one tile into an encounter
         y = int((room.sh - room.y) * random.gauss(0.5, 0.1) + room.y)
         x = int((room.sw - room.x) * random.gauss(0.5, 0.1) + room.x)
