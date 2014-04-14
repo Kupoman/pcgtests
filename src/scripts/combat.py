@@ -4,6 +4,23 @@ from scripts import engine, spells
 import time
 
 
+class Projectile:
+	def __init__(self, effect, rank, obname, origin):
+		self.object = engine.add_object(obname, origin)
+		self.origin = self.object.worldPosition.copy()
+		self.effect = effect
+		self.rank = rank
+
+	def move(self, target, dt):
+		vec = target.object.worldPosition - self.origin
+		vec.normalized()
+
+		self.object.worldPosition += vec * dt
+
+	def end(self):
+		self.object.endObject()
+
+
 class Combatant:
 	STAMINA_RATE = 0.25
 	DODGE_COST = 0.3
@@ -20,21 +37,41 @@ class Combatant:
 		self.enemy_target = None
 		self.ally_target = self
 
+		self._inbound = []
+
 	def update(self, dt):
 		self.stamina += self.STAMINA_RATE * dt
 		self.stamina = max(self.stamina, 1.0)
 
+		for proj in self._inbound[:]:
+			d = (proj.object.worldPosition - self.object.worldPosition).length_squared
+			if d < 1:
+				if proj.effect == 'damage':
+					self.hp -= 1
+				else:
+					raise NotImplementedError(proj.effect)
+
+				proj.end()
+				self._inbound.remove(proj)
+			else:
+				proj.move(self, dt)
+
 	def use_spell(self, idx):
 		spell = self.spells[idx]
 
+		projloc = self.object.worldPosition.copy()
+		projloc[2] += 1
+
 		for i in spell.effects:
 			if i == 'damage':
-				self.enemy_target.hp -= 1
+				self.enemy_target._inbound.append(Projectile(i, 1, "DamageProjectile", projloc))
 			else:
 				raise NotImplementedError(i)
 
 	def end(self):
 		self.object.endObject()
+		for i in self._inbound:
+			i.end()
 
 
 class Hero(Combatant):
@@ -118,7 +155,7 @@ class Combat:
 				self.enemies.remove(i)
 				if self.player.enemy_target == i:
 					self.player.enemy_target = None
-				i.object.endObject()
+				i.end()
 
 		if not self.enemies:
 			logic.getSceneList()[0].resume()
