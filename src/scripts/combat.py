@@ -109,6 +109,8 @@ class Hero(Combatant):
 		ringloc[2] += 1
 		self.ring = engine.add_object("DodgeRing",ringloc)
 
+		self.spells = logic.globalDict['player_data'].spell_list
+
 	def end(self):
 		super().end()
 		self.ring.endObject()
