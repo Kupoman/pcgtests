@@ -32,6 +32,10 @@ def init(cont):
 def update(cont):
 	main = bge.logic.getCurrentScene().objects["Main"]
 
+	# Just in case init hasn't been called yet
+	if "player" not in main:
+		return
+
 	if main["encounter_scene"]:
 		return
 
