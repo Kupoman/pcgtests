@@ -41,7 +41,7 @@ class Combatant:
 
 	def update(self, dt):
 		self.stamina += self.STAMINA_RATE * dt
-		self.stamina = max(self.stamina, 1.0)
+		self.stamina = min(self.stamina, 1.0)
 
 		for proj in self._inbound[:]:
 			d = (proj.object.worldPosition - self.object.worldPosition).length_squared
@@ -58,6 +58,12 @@ class Combatant:
 
 	def use_spell(self, idx):
 		spell = self.spells[idx]
+
+		if spell.stamina_cost > self.stamina:
+			print("Not enough stamina")
+			return
+
+		self.stamina -= spell.stamina_cost
 
 		projloc = self.object.worldPosition.copy()
 		projloc[2] += 1

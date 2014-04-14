@@ -1,3 +1,4 @@
+from builtins import property
 import math
 
 EFFECTS = ('damage', 'heal', 'slow', 'haste')
@@ -39,6 +40,8 @@ class SpellDna:
 
 
 class Spell:
+	BASE_STAMINA = 0.4
+
 	def __init__(self):
 		self.dna = None
 		self.effects = []
@@ -80,6 +83,11 @@ class Spell:
 				self.name += _NAME_GEN_REP[count] + _NAME_GEN_EFFECTS[i]
 
 		self.name = self.name.title()
+
+	@property
+	def stamina_cost(self):
+		# ToDo add extra stamina from cost vector
+		return self.BASE_STAMINA
 
 	def __repr__(self):
 		return self.name
