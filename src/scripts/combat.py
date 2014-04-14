@@ -157,38 +157,11 @@ class Combat:
 		# Give the player something to shoot at
 		self.player.enemy_target = self.enemies[0]
 
-		logic.getCurrentScene().post_draw.append(self._render_bg)
-
 		# UI
 		self.ui = bgui_bge_utils.System()
 		self.ui.load_layout(CombatLayout, self)
 
 		self.prev_time = time.time()
-
-	def _render_bg(self):
-		glMatrixMode(GL_TEXTURE)
-		glPushMatrix()
-		glLoadIdentity()
-		glMatrixMode(GL_MODELVIEW)
-		glPushMatrix()
-		glLoadIdentity()
-		glMatrixMode(GL_PROJECTION)
-		glPushMatrix()
-		glLoadIdentity()
-
-		glColor3f(0.5, 1.0, 0.0)
-
-		positions = [(-1, -1), (1, -1), (1, 1), (-1, 1)]
-		glBegin(GL_QUADS)
-		for i in range(4):
-			glVertex3f(positions[i][0], positions[i][1], 1)
-		glEnd()
-
-		glPopMatrix()
-		glMatrixMode(GL_TEXTURE)
-		glPopMatrix()
-		glMatrixMode(GL_MODELVIEW)
-		glPopMatrix()
 
 	def update(self):
 		self.ui.run()
