@@ -1,6 +1,8 @@
 from bge import logic, events
 from bgl import *
 from scripts import engine, spells
+import scripts.bgui as bgui
+import scripts.bgui.bge_utils as bgui_bge_utils
 import time
 
 
@@ -98,6 +100,18 @@ class Enemy(Combatant):
 		super().__init__(engine.add_object("Player", location))
 
 
+class CombatLayout(bgui_bge_utils.Layout):
+	def __init__(self, sys, data):
+		super().__init__(sys, data)
+
+		self.stamina = bgui.ProgressBar(self, size=[0.8, 0.05], pos=[0, 0.08], options=bgui.BGUI_CENTERX)
+		self.stamina.fill_colors = [[1, 1, 1, 1]] * 4
+		self.stamina.border = 3
+
+	def update(self):
+		self.stamina.percent = self.data.player.stamina
+
+
 class Combat:
 	def __init__(self):
 		self.main = logic.getSceneList()[0].objects["Main"]
@@ -117,6 +131,10 @@ class Combat:
 		self.player.enemy_target = self.enemies[0]
 
 		logic.getCurrentScene().post_draw.append(self._render_bg)
+
+		# UI
+		self.ui = bgui_bge_utils.System()
+		self.ui.load_layout(CombatLayout, self)
 
 		self.prev_time = time.time()
 
@@ -146,6 +164,8 @@ class Combat:
 		glPopMatrix()
 
 	def update(self):
+		self.ui.run()
+
 		evts = logic.keyboard.events
 
 		dt = time.time() - self.prev_time
@@ -180,16 +200,11 @@ class Combat:
 			self.player.use_spell(3)
 
 
-g_combat = None
-
-
 def init(cont):
-	global g_combat
-
-	g_combat = Combat()
+	cont.owner['combat'] = Combat()
 
 
 def update(cont):
-	global g_combat
-	if g_combat is not None:
-		g_combat.update()
+	combat = cont.owner.get('combat')
+	if combat is not None:
+		combat.update()
