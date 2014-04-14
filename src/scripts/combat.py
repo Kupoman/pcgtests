@@ -33,23 +33,44 @@ class Combatant:
 			else:
 				raise NotImplementedError(i)
 
+	def end(self):
+		self.object.endObject()
+
+
+class Hero(Combatant):
+	def __init__(self, location):
+		super().__init__(engine.add_object("Player", location))
+
+		ringloc = location[:]
+		ringloc[2] += 1
+		self.ring = engine.add_object("DodgeRing",ringloc)
+
+	def end(self):
+		super().end()
+		self.ring.endObject()
+
+
+class Enemy(Combatant):
+	def __init__(self, location):
+		super().__init__(engine.add_object("Player", location))
+
 
 class Combat:
 	def __init__(self):
 		self.main = logic.getSceneList()[0].objects["Main"]
 
 		# Setup player
-		self.player = Combatant(engine.add_object("Player", (8, 2, 0)))
-		self.pring = engine.add_object("DodgeRing", (8, 2, 1))
+		self.player = Hero([8, 2, 0])
 
 		# Setup enemies
 		locs = ((-8, 7, 0), (-8, 2, 0), (-8, -3, 0))
 		self.enemies = []
 		for i in locs:
-			enemy = Combatant(engine.add_object("Player", i))
+			enemy = Enemy(i)
 			enemy.enemy_target = self.player
 			self.enemies.append(enemy)
 
+		# Give the player something to shoot at
 		self.player.enemy_target = self.enemies[0]
 
 		logic.getCurrentScene().post_draw.append(self._render_bg)
