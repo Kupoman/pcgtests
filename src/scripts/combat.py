@@ -1,6 +1,6 @@
 from bge import logic, events
 from bgl import *
-from scripts import engine
+from scripts import engine, spells
 import time
 
 
@@ -13,21 +13,44 @@ class Combatant:
 		self.stamina = 0
 		self.hp = 3
 
+		sdna = spells.SpellDna()
+		sdna.effects[0] = 1
+		self.spells = [spells.Spell.from_dna(sdna)] * 4
+
+		self.enemy_target = None
+		self.ally_target = self
+
 	def update(self, dt):
 		self.stamina += self.STAMINA_RATE * dt
 		self.stamina = max(self.stamina, 1.0)
+
+	def use_spell(self, idx):
+		spell = self.spells[idx]
+
+		for i in spell.effects:
+			if i == 'damage':
+				self.enemy_target.hp -= 1
+			else:
+				raise NotImplementedError(i)
 
 
 class Combat:
 	def __init__(self):
 		self.main = logic.getSceneList()[0].objects["Main"]
+
+		# Setup player
 		self.player = Combatant(engine.add_object("Player", (8, 2, 0)))
 		self.pring = engine.add_object("DodgeRing", (8, 2, 1))
-		self.enemies = [
-			Combatant(engine.add_object("Player", (-8, 7, 0))),
-			Combatant(engine.add_object("Player", (-8, 2, 0))),
-			Combatant(engine.add_object("Player", (-8, -3, 0))),
-		]
+
+		# Setup enemies
+		locs = ((-8, 7, 0), (-8, 2, 0), (-8, -3, 0))
+		self.enemies = []
+		for i in locs:
+			enemy = Combatant(engine.add_object("Player", i))
+			enemy.enemy_target = self.player
+			self.enemies.append(enemy)
+
+		self.player.enemy_target = self.enemies[0]
 
 		logic.getCurrentScene().post_draw.append(self._render_bg)
 
@@ -64,13 +87,33 @@ class Combat:
 		dt = time.time() - self.prev_time
 		self.prev_time = time.time()
 
-		for i in self.enemies + [self.player]:
-			i.update(dt)
+		# Player
+		self.player.update(dt)
 
-		if evts[events.SPACEKEY] == logic.KX_INPUT_ACTIVE:
+		for i in self.enemies[:]:
+			if i.hp > 0:
+				i.update(dt)
+			else:
+				self.enemies.remove(i)
+				if self.player.enemy_target == i:
+					self.player.enemy_target = None
+				i.object.endObject()
+
+		if not self.enemies:
 			logic.getSceneList()[0].resume()
 			self.main["encounter_scene"] = False
 			logic.getCurrentScene().end()
+		elif self.player.enemy_target is None:
+			self.player.enemy_target = self.enemies[0]
+
+		if evts[events.QKEY] == logic.KX_INPUT_JUST_ACTIVATED:
+			self.player.use_spell(0)
+		if evts[events.WKEY] == logic.KX_INPUT_JUST_ACTIVATED:
+			self.player.use_spell(1)
+		if evts[events.EKEY] == logic.KX_INPUT_JUST_ACTIVATED:
+			self.player.use_spell(2)
+		if evts[events.RKEY] == logic.KX_INPUT_JUST_ACTIVATED:
+			self.player.use_spell(3)
 
 
 g_combat = None
@@ -79,7 +122,6 @@ g_combat = None
 def init(cont):
 	global g_combat
 
-	print("Combat init")
 	g_combat = Combat()
 
 
