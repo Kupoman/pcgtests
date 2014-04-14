@@ -8,17 +8,24 @@ import random
 
 
 class Projectile:
-	def __init__(self, effect, rank, obname, origin):
+	def __init__(self, target, effect, rank, obname, origin):
 		self.object = engine.add_object(obname, origin)
 		self.origin = self.object.worldPosition.copy()
 		self.effect = effect
 		self.rank = rank
+		target._inbound.append(self)
+		self.target = target.object.worldPosition.copy()
+		self.target[2] += 1
 
-	def move(self, target, dt):
-		vec = target.object.worldPosition - self.origin
+	def move(self, dt):
+		vec = self.target - self.origin
 		vec.normalized()
 
-		self.object.worldPosition += vec * dt
+		self.object.worldPosition += vec * dt * 0.5
+
+	@property
+	def distance(self):
+		return (self.target - self.object.worldPosition).length_squared
 
 	def end(self):
 		self.object.endObject()
@@ -32,6 +39,7 @@ class Combatant:
 		self.object = kxobj
 		self.stamina = 0
 		self.hp = 3
+		self.dodging = False
 
 		sdna = spells.SpellDna()
 		sdna.effects[0] = 1
@@ -47,8 +55,8 @@ class Combatant:
 		self.stamina = min(self.stamina, 1.0)
 
 		for proj in self._inbound[:]:
-			d = (proj.object.worldPosition - self.object.worldPosition).length_squared
-			if d < 1:
+			d = proj.distance
+			if d < 0.5:
 				if proj.effect == 'damage':
 					self.hp -= 1
 				else:
@@ -56,8 +64,13 @@ class Combatant:
 
 				proj.end()
 				self._inbound.remove(proj)
+			elif self.dodging and d < 8:
+				proj.end()
+				self._inbound.remove(proj)
 			else:
-				proj.move(self, dt)
+				proj.move(dt)
+
+		self.dodging = False
 
 	def use_spell(self, idx):
 		spell = self.spells[idx]
@@ -73,9 +86,14 @@ class Combatant:
 
 		for i in spell.effects:
 			if i == 'damage':
-				self.enemy_target._inbound.append(Projectile(i, 1, "DamageProjectile", projloc))
+				Projectile(self.enemy_target, i, 1, "DamageProjectile", projloc)
 			else:
 				raise NotImplementedError(i)
+
+	def dodge(self):
+		if self.stamina > self.DODGE_COST:
+			self.dodging = True
+			self.stamina -= self.DODGE_COST
 
 	def end(self):
 		self.object.endObject()
@@ -207,6 +225,8 @@ class Combat:
 			self.player.use_spell(2)
 		if evts[events.RKEY] == logic.KX_INPUT_JUST_ACTIVATED:
 			self.player.use_spell(3)
+		if evts[events.SPACEKEY] == logic.KX_INPUT_JUST_ACTIVATED:
+			self.player.dodge()
 
 
 def init(cont):
