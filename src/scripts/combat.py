@@ -4,6 +4,7 @@ from scripts import engine, spells
 import scripts.bgui as bgui
 import scripts.bgui.bge_utils as bgui_bge_utils
 import time
+import random
 
 
 class Projectile:
@@ -96,8 +97,16 @@ class Hero(Combatant):
 
 
 class Enemy(Combatant):
+	FIRE_CHANCE = 0.0035
+
 	def __init__(self, location):
 		super().__init__(engine.add_object("Player", location))
+
+	def update(self, dt):
+		super().update(dt)
+
+		if random.random() < self.FIRE_CHANCE:
+			self.use_spell(0)
 
 
 class CombatLayout(bgui_bge_utils.Layout):
@@ -183,7 +192,7 @@ class Combat:
 					self.player.enemy_target = None
 				i.end()
 
-		if not self.enemies:
+		if not self.enemies or self.player.hp <= 0:
 			logic.getSceneList()[0].resume()
 			self.main["encounter_scene"] = False
 			logic.getCurrentScene().end()
