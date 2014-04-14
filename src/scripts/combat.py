@@ -1,122 +1,239 @@
-from spell import SpellFactory
+from bge import logic, events
+from bgl import *
+from scripts import engine, spells
+import scripts.bgui as bgui
+import scripts.bgui.bge_utils as bgui_bge_utils
+import time
+import random
 
-class Character:
-	def __init__(self, name):
-		self.name = name
-		self.hp = 20
-		self.mana = 30
-		self.magic = 5
-		self.defense = 5
-		self.speed = 1
 
-		self.effects = {}
-		self.spells = []
+class Projectile:
+	def __init__(self, target, effect, rank, obname, origin):
+		self.object = engine.add_object(obname, origin)
+		self.origin = self.object.worldPosition.copy()
+		self.effect = effect
+		self.rank = rank
+		target._inbound.append(self)
+		self.target = target.object.worldPosition.copy()
+		self.target[2] += 1
 
-	def __repr__(self):
-		return self.name
+	def move(self, dt):
+		vec = self.target - self.origin
+		vec.normalized()
 
-	def apply_effect(self, effect):
-		if effect.type in self.effects and self.effect[effect.type].value > effect.value:
-			print("Stronger effect for %s already exists on %s" % (effect.type, self.name))
+		self.object.worldPosition += vec * dt * 0.5
 
-		self.effects[effect.type] = effect
-		effect.apply(self)
+	@property
+	def distance(self):
+		return (self.target - self.object.worldPosition).length_squared
 
-class Encounter:
-	def __init__(self, participants):
-		self.participants = participants
-		for i in self.participants:
-			i.atb = 0
+	def end(self):
+		self.object.endObject()
 
-	def tick(self):
-		for i in self.participants:
-			i.atb += i.speed
 
-			if i.atb >= 10:
-				self.do_turn(i)
-				i.atb -= 10
+class Combatant:
+	STAMINA_RATE = 0.25
+	DODGE_COST = 0.3
 
-	def validate_participant(self, part):
-		if part.hp <=0:
-			self.participants.remove(part)
+	def __init__(self, kxobj):
+		self.object = kxobj
+		self.stamina = 0
+		self.hp = 3
+		self.dodging = False
 
-	def do_turn(self, ch):
-		print("%s's turn!" % (ch,))
+		sdna = spells.SpellDna()
+		sdna.effects[0] = 1
+		self.spells = [spells.Spell.from_dna(sdna)] * 4
 
-		# Tick any active effects
-		for fxtype, fx in ch.effects.items():
-			fx.tick(ch)
-			fx.duration -= 1
-		self.validate_participant(ch)
+		self.enemy_target = None
+		self.ally_target = self
 
-		# Remove any completed effects
-		for fx in [i for i in ch.effects.values() if i.duration <= 0]:
-			del ch.effects[fx.type]
+		self._inbound = []
 
-		# Display options
-		option = -1
-		while option < 0:
-			print("HP: ", ch.hp)
-			print("Spells:")
-			for i, spell in enumerate(ch.spells):
-				print("\t%d. %s" %(i+1, spell.name.title()))
- 
-			inp = input("Enter option: ")
-			try:
-				option = int(inp) -1
-			except ValueError:
-				option = -1
-			if option > len(ch.spells)-1 or option < 0:
-				option = -1
-				print("Invalid option")
-   
-		# if option == 1:
-		spell = ch.spells[option]
+	def update(self, dt):
+		self.stamina += self.STAMINA_RATE * dt
+		self.stamina = min(self.stamina, 1.0)
 
-		# Choose Target
-		targets = self.participants[:]
-		targets.remove(ch)
+		for proj in self._inbound[:]:
+			d = proj.distance
+			if d < 0.5:
+				if proj.effect == 'damage':
+					self.hp -= 1
+				else:
+					raise NotImplementedError(proj.effect)
 
-		target = None
-		while target is None:
-			print("Attacking, pick a target:")
-			for idx, i in enumerate(targets):
-				print("\t%d. %s" % (idx+1, i))
-			
-			tidx = input("Target: ")
-			try:
-				tidx = int(tidx)-1
-			except ValueError:
-				tidx = -1
-			if 0 < tidx < len(targets) - 1:
-				print("Invalid target")
+				proj.end()
+				self._inbound.remove(proj)
+			elif self.dodging and d < 8:
+				proj.end()
+				self._inbound.remove(proj)
 			else:
-				target = targets[tidx]
+				proj.move(dt)
 
-		# Cast Spell
-		for effect in spell.effects:
-			target.apply_effect(effect)
-			effect.tick(target)
-		self.validate_participant(target)
-		for cost in spell.costs:
-			ch.apply_effect(cost)
-			cost.tick(ch)
-		self.validate_participant(ch)
+		self.dodging = False
 
-		print()
+	def use_spell(self, idx):
+		spell = self.spells[idx]
 
-if __name__ == '__main__':
-	sfactory = SpellFactory()
-	participants = [
-			Character("Foo"),
-			Character("Bar"),
-		]
+		if spell.stamina_cost > self.stamina:
+			print("Not enough stamina")
+			return
 
-	for p in participants:
-		p.spells.append(sfactory.get_predefined("attack"))
+		self.stamina -= spell.stamina_cost
 
-	e = Encounter(participants)
-	while len(e.participants) > 1:
-		e.tick()
+		projloc = self.object.worldPosition.copy()
+		projloc[2] += 1
 
-	print("Encounter done!")
+		for i in spell.effects:
+			if i == 'damage':
+				Projectile(self.enemy_target, i, 1, "DamageProjectile", projloc)
+			else:
+				raise NotImplementedError(i)
+
+	def dodge(self):
+		if self.stamina > self.DODGE_COST:
+			self.dodging = True
+			self.stamina -= self.DODGE_COST
+
+	def end(self):
+		self.object.endObject()
+		for i in self._inbound:
+			i.end()
+
+
+class Hero(Combatant):
+	def __init__(self, location):
+		super().__init__(engine.add_object("Player", location))
+
+		ringloc = location[:]
+		ringloc[2] += 1
+		self.ring = engine.add_object("DodgeRing",ringloc)
+
+	def end(self):
+		super().end()
+		self.ring.endObject()
+
+
+class Enemy(Combatant):
+	FIRE_CHANCE = 0.0035
+
+	def __init__(self, location):
+		super().__init__(engine.add_object("Player", location))
+
+	def update(self, dt):
+		super().update(dt)
+
+		if random.random() < self.FIRE_CHANCE:
+			self.use_spell(0)
+
+
+class CombatLayout(bgui_bge_utils.Layout):
+	def __init__(self, sys, data):
+		super().__init__(sys, data)
+
+		self.stamina = bgui.ProgressBar(self, size=[0.8, 0.05], pos=[0, 0.08], options=bgui.BGUI_CENTERX)
+		self.stamina.fill_colors = [[1, 1, 1, 1]] * 4
+		self.stamina.border = 3
+
+	def update(self):
+		self.stamina.percent = self.data.player.stamina
+
+
+class Combat:
+	def __init__(self):
+		self.main = logic.getSceneList()[0].objects["Main"]
+
+		# Setup player
+		self.player = Hero([8, 2, 0])
+
+		# Setup enemies
+		locs = ((-8, 7, 0), (-8, 2, 0), (-8, -3, 0))
+		self.enemies = []
+		for i in locs:
+			enemy = Enemy(i)
+			enemy.enemy_target = self.player
+			self.enemies.append(enemy)
+
+		# Give the player something to shoot at
+		self.player.enemy_target = self.enemies[0]
+
+		logic.getCurrentScene().post_draw.append(self._render_bg)
+
+		# UI
+		self.ui = bgui_bge_utils.System()
+		self.ui.load_layout(CombatLayout, self)
+
+		self.prev_time = time.time()
+
+	def _render_bg(self):
+		glMatrixMode(GL_TEXTURE)
+		glPushMatrix()
+		glLoadIdentity()
+		glMatrixMode(GL_MODELVIEW)
+		glPushMatrix()
+		glLoadIdentity()
+		glMatrixMode(GL_PROJECTION)
+		glPushMatrix()
+		glLoadIdentity()
+
+		glColor3f(0.5, 1.0, 0.0)
+
+		positions = [(-1, -1), (1, -1), (1, 1), (-1, 1)]
+		glBegin(GL_QUADS)
+		for i in range(4):
+			glVertex3f(positions[i][0], positions[i][1], 1)
+		glEnd()
+
+		glPopMatrix()
+		glMatrixMode(GL_TEXTURE)
+		glPopMatrix()
+		glMatrixMode(GL_MODELVIEW)
+		glPopMatrix()
+
+	def update(self):
+		self.ui.run()
+
+		evts = logic.keyboard.events
+
+		dt = time.time() - self.prev_time
+		self.prev_time = time.time()
+
+		# Player
+		self.player.update(dt)
+
+		for i in self.enemies[:]:
+			if i.hp > 0:
+				i.update(dt)
+			else:
+				self.enemies.remove(i)
+				if self.player.enemy_target == i:
+					self.player.enemy_target = None
+				i.end()
+
+		if not self.enemies or self.player.hp <= 0:
+			logic.getSceneList()[0].resume()
+			self.main["encounter_scene"] = False
+			logic.getCurrentScene().end()
+		elif self.player.enemy_target is None:
+			self.player.enemy_target = self.enemies[0]
+
+		if evts[events.QKEY] == logic.KX_INPUT_JUST_ACTIVATED:
+			self.player.use_spell(0)
+		if evts[events.WKEY] == logic.KX_INPUT_JUST_ACTIVATED:
+			self.player.use_spell(1)
+		if evts[events.EKEY] == logic.KX_INPUT_JUST_ACTIVATED:
+			self.player.use_spell(2)
+		if evts[events.RKEY] == logic.KX_INPUT_JUST_ACTIVATED:
+			self.player.use_spell(3)
+		if evts[events.SPACEKEY] == logic.KX_INPUT_JUST_ACTIVATED:
+			self.player.dodge()
+
+
+def init(cont):
+	cont.owner['combat'] = Combat()
+
+
+def update(cont):
+	combat = cont.owner.get('combat')
+	if combat is not None:
+		combat.update()

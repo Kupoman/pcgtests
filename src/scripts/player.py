@@ -22,8 +22,9 @@ class Player:
 		
 		
 def init(cont):
-	main = bge.logic.getCurrentScene().objects["Main"]
-	main["player"] = Player(cont.owner)
+	scene = bge.logic.getCurrentScene()
+	main = scene.objects["Main"]
+	main["player"] = Player(scene.objects["Player"])
 	main["player"].tile_position = mathutils.Vector(main["dmap"].player_start_loc)
 	main["encounter_scene"] = False
 
@@ -51,7 +52,7 @@ def update(cont):
 		kworld = mathutils.Vector(dmap.tile_to_world(player.tile_position))
 		vworld = mathutils.Vector(dmap.tile_to_world(player.tile_target))
 
-		cont.owner.worldPosition.xy = kworld.lerp(vworld, player.move_factor/player.MOVE_TIME)
+		player._obj.worldPosition.xy = kworld.lerp(vworld, player.move_factor/player.MOVE_TIME)
 
 		player.cam_target = player.orig_cam.xy + player._obj.worldPosition.xy
 
@@ -93,5 +94,6 @@ def update(cont):
 			print("Encounter!")
 			dmap.encounters.remove(i)
 			i.endObject()
-			bge.logic.addScene("Combat")
+			bge.logic.addScene("Combat2")
+			bge.logic.getCurrentScene().suspend()
 			main["encounter_scene"] = True
