@@ -77,7 +77,7 @@ class Combatant:
 
 		if spell.stamina_cost > self.stamina:
 			print("Not enough stamina")
-			return
+			return False
 
 		self.stamina -= spell.stamina_cost
 
@@ -90,10 +90,14 @@ class Combatant:
 			else:
 				raise NotImplementedError(i)
 
+		return True
+
 	def dodge(self):
 		if self.stamina > self.DODGE_COST:
 			self.dodging = True
 			self.stamina -= self.DODGE_COST
+			return True
+		return False
 
 	def end(self):
 		self.object.endObject()
@@ -114,6 +118,19 @@ class Hero(Combatant):
 		self.ring = engine.add_object("DodgeRing",ringloc)
 
 		self.spells = logic.globalDict['player_data'].spell_list
+
+	def update(self, dt):
+		super().update(dt)
+
+		self.object.playAction("cg.Idle", 0, 32, priority=1, play_mode=logic.KX_ACTION_MODE_LOOP)
+
+	def use_spell(self, idx):
+		if super().use_spell(idx):
+			self.object.playAction("cg.Attack", 0, 24, speed=2.0)
+
+	def dodge(self):
+		if super().dodge():
+			self.object.playAction("cg.Death", 0, 32, speed=5.0)
 
 	def end(self):
 		super().end()
