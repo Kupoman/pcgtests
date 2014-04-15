@@ -19,12 +19,28 @@ class Player:
 		self.orig_cam = cam.worldPosition.copy()
 		cam.worldPosition.xy = self.orig_cam.xy + self._obj.worldPosition.xy
 		self.cam_target = None
+
+		self.animate("idle")
+
+	def face(self, dir):
+		v = dir[0], dir[1], 0
+		self._obj.alignAxisToVect(v, 1)
+		self._obj.alignAxisToVect((0, 0, 1))
+
+	def animate(self, anim):
+		if anim == "moving":
+			self._obj.playAction("cg.Run", 0, 22, play_mode=bge.logic.KX_ACTION_MODE_LOOP, speed=2.0)
+		elif anim == "idle":
+			self._obj.playAction("cg.Idle", 0, 32, play_mode=bge.logic.KX_ACTION_MODE_LOOP)
+		else:
+			raise NotImplementedError("Action: " + anim)
+
 		
 		
 def init(cont):
 	scene = bge.logic.getCurrentScene()
 	main = scene.objects["Main"]
-	main["player"] = Player(scene.objects["Player"])
+	main["player"] = Player(scene.objects["ClayGolemArm"])
 	main["player"].tile_position = mathutils.Vector(main["dmap"].player_start_loc)
 	main["encounter_scene"] = False
 
@@ -48,6 +64,7 @@ def update(cont):
 
 	if player.move_factor < player.MOVE_TIME:
 		#print("Move to", player.tile_target, "from", player.tile_position)
+		player.animate("moving")
 		player.move_factor += time.time() - player.last_move
 		player.last_move = time.time()
 		if player.move_factor > player.MOVE_TIME or player.move_factor / player.MOVE_TIME > 0.95:
@@ -76,12 +93,16 @@ def update(cont):
 		
 		if events[bge.events.WKEY] == bge.logic.KX_INPUT_ACTIVE:
 			target_tile += mathutils.Vector((0, 1))
+			player.face((0, 1))
 		elif events[bge.events.AKEY] == bge.logic.KX_INPUT_ACTIVE:
 			target_tile += mathutils.Vector((-1, 0))
+			player.face((-1, 0))
 		elif events[bge.events.SKEY] == bge.logic.KX_INPUT_ACTIVE:
 			target_tile += mathutils.Vector((0, -1))
+			player.face((0, -1))
 		elif events[bge.events.DKEY] == bge.logic.KX_INPUT_ACTIVE:
 			target_tile += mathutils.Vector((1, 0))
+			player.face((1, 0))
 
 		#print(target_tile, player.tile_position)
 		if target_tile != player.tile_position and dmap.valid_tile(target_tile):
@@ -89,6 +110,8 @@ def update(cont):
 			player.tile_target = target_tile
 			player.move_factor = 0
 			player.last_move = time.time()
+		else:
+			player.animate("idle")
 
 	# Check encounters
 	for i in dmap.encounters[:]:

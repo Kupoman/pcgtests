@@ -39,7 +39,7 @@ class DungeonMap:
 						color = (255, 0, 0)
 						self.player_start_loc = (x, y)
 						engine.add_object("PlayerStart", (tpos.x, tpos.y, 0.75))
-						engine.add_object("Player", (tpos.x, tpos.y, 0.75))
+						engine.add_object("ClayGolemArm", (tpos.x, tpos.y, 0.75))
 					elif tile.isdigit():
 						if tile not in self.telecolors:
 							self.telecolors[tile] = (random.random(), random.random(), random.random(), 1.0)

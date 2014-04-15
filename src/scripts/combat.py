@@ -103,7 +103,11 @@ class Combatant:
 
 class Hero(Combatant):
 	def __init__(self, location):
-		super().__init__(engine.add_object("Player", location))
+		super().__init__(engine.add_object("ClayGolemArm", location))
+
+		self.object.alignAxisToVect((-1, 0, 0), 1)
+		self.object.alignAxisToVect((0, 0, 1))
+		self.object.playAction("cg.Idle", 0, 32, play_mode=logic.KX_ACTION_MODE_LOOP)
 
 		ringloc = location[:]
 		ringloc[2] += 1
