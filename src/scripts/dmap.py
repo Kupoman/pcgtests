@@ -16,7 +16,7 @@ class DungeonMap:
 		self._img_width = len(bsp_data[0])
 
 		self.telemap = {}
-		self.telecolors = {}
+		self.telepos = {}
 		self.encounters = []
 		self.player_start_loc = (0, 0)
 
@@ -41,17 +41,21 @@ class DungeonMap:
 						engine.add_object("PlayerStart", (tpos.x, tpos.y, 0.75))
 						engine.add_object("ClayGolemArm", (tpos.x, tpos.y, 0.75))
 					elif tile.isdigit():
-						if tile not in self.telecolors:
-							self.telecolors[tile] = (random.random(), random.random(), random.random(), 1.0)
+						tele = engine.add_object("Teleporter", (tpos.x, tpos.y, 0.75))
 						if tile not in self.telemap:
 							self.telemap[tile] = [(x, y)]
+							self.telepos[tile] = Vector((tpos.x, tpos.y, 1.25))
 						else:
 							self.telemap[tile].append((x, y))
+							tele_link = engine.add_object("TeleLink", (tpos.x, tpos.y, 1.25))
 
-						color = [int(i*255) for i in self.telecolors[tile][:3]]
-
-						tele = engine.add_object("Teleporter", (tpos.x, tpos.y, 0.75))
-						tele.color = self.telecolors[tile]
+							target_pos = self.telepos[tile]
+							cur_pos = Vector((tpos.x, tpos.y, 1.25))
+							
+							target_vec = target_pos - cur_pos
+							link_scale = target_vec.length
+							tele_link.localScale = (1, link_scale, 1)
+							tele_link.alignAxisToVect(-target_vec, 1)
 
 				self._img_data.append(color)
 
