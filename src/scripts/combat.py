@@ -38,7 +38,7 @@ class Combatant:
 	def __init__(self, kxobj):
 		self.object = kxobj
 		self.stamina = 0
-		self.hp = 3
+		self.hp =  self.maxhp = 3
 		self.dodging = False
 
 		sdna = spells.SpellDna()
@@ -158,8 +158,15 @@ class CombatLayout(bgui_bge_utils.Layout):
 		self.stamina.fill_colors = [[1, 1, 1, 1]] * 4
 		self.stamina.border = 3
 
+		self.health = bgui.ProgressBar(self, size=[0.8, 0.05], pos=[0, 0.15], options=bgui.BGUI_CENTERX)
+		self.health.fill_colors = [[0.6, 0, 0, 1]] * 4
+		self.health.border = 3
+
 	def update(self):
-		self.stamina.percent = self.data.player.stamina
+		player = self.data.player
+
+		self.stamina.percent = player.stamina
+		self.health.percent = player.hp / player.maxhp
 
 
 class Combat:
