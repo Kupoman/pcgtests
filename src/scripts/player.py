@@ -2,6 +2,8 @@ import bge
 import time
 import mathutils
 
+from scripts.player_data import PlayerData
+
 ENCOUNTER_DISTANCE = 1.25
 
 class Player:
@@ -43,6 +45,11 @@ def init(cont):
 	main["player"] = Player(scene.objects["ClayGolemArm"])
 	main["player"].tile_position = mathutils.Vector(main["dmap"].player_start_loc)
 	main["encounter_scene"] = False
+
+	# Make sure we always have a PlayerData
+	if "player_data" not in bge.logic.globalDict:
+		print("Using debug player.")
+		bge.logic.globalDict['player_data'] = PlayerData.new("__DEBUG__")
 
 
 def update(cont):

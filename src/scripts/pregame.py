@@ -6,6 +6,7 @@ import scripts.bgui.bge_utils as bgui_bge_utils
 from scripts.player_data import PlayerData
 
 from collections import OrderedDict
+import sys
 
 
 class Menu(bgui.ListBox):
@@ -141,6 +142,10 @@ class PreGame:
 
 def update(cont):
 	main = cont.owner
+
+	if 'skippg' in sys.argv:
+		cont.activate(cont.actuators['StartGame'])
+
 	if 'PreGame' not in main:
 		main['PreGame'] = PreGame(cont)
 
