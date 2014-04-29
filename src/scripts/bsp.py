@@ -1,5 +1,6 @@
 from collections import namedtuple
 import random
+import time
 
 
 class V:
@@ -81,7 +82,10 @@ def split(startx, starty, endx, endy, min_room_x, min_room_y):
 
 
 def gen(sw, sh, min_room_x=5, min_room_y=5, erosion=0.1, num_encounters=5):
-	# random.seed(22)
+	seed = time.time()
+	print("Generating dungeon with seed:", seed)
+	random.seed(seed)
+
 	dungeon = [['.' for _ in range(sw)] for _ in range(sh)]
 	rooms = []
 
