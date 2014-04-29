@@ -154,11 +154,11 @@ class CombatLayout(bgui_bge_utils.Layout):
 	def __init__(self, sys, data):
 		super().__init__(sys, data)
 
-		self.stamina = bgui.ProgressBar(self, size=[0.8, 0.05], pos=[0, 0.08], options=bgui.BGUI_CENTERX)
+		self.stamina = bgui.ProgressBar(self, size=[0.8, 0.03], pos=[0, 0.05], options=bgui.BGUI_CENTERX)
 		self.stamina.fill_colors = [[1, 1, 1, 1]] * 4
 		self.stamina.border = 3
 
-		self.health = bgui.ProgressBar(self, size=[0.8, 0.05], pos=[0, 0.15], options=bgui.BGUI_CENTERX)
+		self.health = bgui.ProgressBar(self, size=[0.8, 0.03], pos=[0, 0.09], options=bgui.BGUI_CENTERX)
 		self.health.fill_colors = [[0.6, 0, 0, 1]] * 4
 		self.health.border = 3
 
