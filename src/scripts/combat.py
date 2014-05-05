@@ -150,6 +150,22 @@ class Enemy(Combatant):
 			self.use_spell(0)
 
 
+class SpellRenderer(bgui.ListBoxRenderer):
+	def __init__(self, lb):
+		super().__init__(lb)
+		self.lb = lb
+		self.idx_to_key = {
+			0: "Q",
+			1: "W",
+			2: "E",
+			3: "R",
+		}
+
+	def render_item(self, item):
+		idx = self.lb.items.index(item)
+		self.label.text = "[" + self.idx_to_key[idx] + "]\t" + str(item)
+		return self.label
+
 class CombatLayout(bgui_bge_utils.Layout):
 	def __init__(self, sys, data):
 		super().__init__(sys, data)
@@ -161,6 +177,12 @@ class CombatLayout(bgui_bge_utils.Layout):
 		self.health = bgui.ProgressBar(self, size=[0.8, 0.03], pos=[0, 0.09], options=bgui.BGUI_CENTERX)
 		self.health.fill_colors = [[0.6, 0, 0, 1]] * 4
 		self.health.border = 3
+
+		lbframe = bgui.Frame(self, size=[0.2, 0.25], pos=[0.7, 0.2])
+		lbframe.colors = [[0.8, 0.8, 0.8, 0.8]] * 4
+		lbframe.border = 2
+		self.spells = bgui.ListBox(lbframe, items=data.player.spells, padding=0.1, size=[0.95, 0.95], options=bgui.BGUI_CENTERED)
+		self.spells.renderer = SpellRenderer(self.spells)
 
 	def update(self):
 		player = self.data.player
