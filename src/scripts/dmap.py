@@ -36,9 +36,8 @@ class DungeonMap:
 						enc = engine.add_object("MonsterSpawn", tpos + Vector((0, 0, 1.75)))
 						self.encounters.append(enc)
 					elif tile == '*':
-						color = (255, 0, 0)
+						color = (255, 255, 255)
 						self.player_start_loc = (x, y)
-						engine.add_object("PlayerStart", (tpos.x, tpos.y, 0.75))
 						engine.add_object("ClayGolemArm", (tpos.x, tpos.y, 0.75))
 					elif tile.isdigit():
 						tele = engine.add_object("Teleporter", (tpos.x, tpos.y, 0.75))
