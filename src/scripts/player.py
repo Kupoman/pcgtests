@@ -128,6 +128,6 @@ def update(cont):
 			print("Encounter!")
 			dmap.encounters.remove(i)
 			i.endObject()
-			bge.logic.addScene("Combat2")
+			bge.logic.addScene("Combat")
 			bge.logic.getCurrentScene().suspend()
 			main["encounter_scene"] = True

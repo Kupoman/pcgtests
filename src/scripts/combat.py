@@ -141,7 +141,7 @@ class Enemy(Combatant):
 	FIRE_CHANCE = 0.0035
 
 	def __init__(self, location):
-		super().__init__(engine.add_object("Player", location))
+		super().__init__(engine.add_object("Monster", location))
 
 	def update(self, dt):
 		super().update(dt)
