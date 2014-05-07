@@ -4,6 +4,7 @@ import scripts.bgui as bgui
 import scripts.bgui.bge_utils as bgui_bge_utils
 
 from scripts.player_data import PlayerData
+from scripts import majors
 
 from collections import OrderedDict
 import sys
@@ -78,13 +79,24 @@ class NewCharacter(bgui_bge_utils.Layout):
 		super().__init__(sys, data)
 
 
-		bgui.Label(self, text="New Student Registration", pt_size=48, pos=[0, 0.8], options=bgui.BGUI_CENTERX)
-		self.student_name = bgui.TextInput(self, prefix="Name: ", text="Enter a name", size=[0.8, 0.05], pos=[0, 0.6], options=bgui.BGUI_CENTERX | bgui.BGUI_INPUT_SELECT_ALL)
-		self.done_btn = bgui.Label(self, text="Done", pos=[0, 0.4], options=bgui.BGUI_CENTERX)
+		bgui.Label(self, text="New Student Registration", pt_size=48,
+			pos=[0, 0.8], options=bgui.BGUI_CENTERX)
+
+		self.student_name = bgui.TextInput(self, prefix="Name: ",
+			text="New Student", size=[0.8, 0.05], pos=[0, 0.6],
+			options=bgui.BGUI_CENTERX | bgui.BGUI_INPUT_SELECT_ALL)
+
+		text = "Major: %s" % majors.MAJORS[0]
+		self.student_major = bgui.Label(self, text="Major: Water", pos=[0, 0.5],
+			options=bgui.BGUI_CENTERX)
+
+		self.done_btn = bgui.Label(self, text="Done", pos=[0, 0.4],
+			options=bgui.BGUI_CENTERX)
 
 		self.menu_options = OrderedDict([
 			(0, (self.student_name, self.name_enter, self.name_exit)),
-			(1, (self.done_btn, self.done_enter, None)),
+			(1, (self.student_major, self.major_enter, None)),
+			(2, (self.done_btn, self.done_enter, None)),
 		])
 
 		self.selected = 0
@@ -94,16 +106,19 @@ class NewCharacter(bgui_bge_utils.Layout):
 		self.highlight = bgui.Frame(self, options=bgui.BGUI_NO_NORMALIZE)
 		self.highlight.colors = [[0.8, 0.8, 0.8, 0.8]] * 4
 
+		self.selected_major = 0
+
 	def update(self):
 		evts = logic.keyboard.events
 
 		if self.entered:
 			if evts[events.ENTERKEY] == logic.KX_INPUT_JUST_ACTIVATED:
 				self.entered = False
-				self.menu_options[self.selected][2]()
+				if self.menu_options[self.selected][2]:
+					self.menu_options[self.selected][2]()
 		else:
 			if evts[events.ENTERKEY] == logic.KX_INPUT_JUST_ACTIVATED:
-				self.entered = True
+				self.entered = self.selected != 1
 				self.menu_options[self.selected][1]()
 			if evts[events.DOWNARROWKEY] == logic.KX_INPUT_JUST_ACTIVATED:
 				self.selected = (self.selected + 1) % len(self.menu_options)
@@ -125,9 +140,16 @@ class NewCharacter(bgui_bge_utils.Layout):
 		self.student_name.deactivate()
 
 	def done_enter(self):
-		logic.globalDict['player_data'] = PlayerData.new(self.student_name.text)
+		name = self.student_name.text
+		major = majors.MAJORS[self.selected_major]
+		logic.globalDict['player_data'] = PlayerData.new(name, major)
 		act = self.data.controller.actuators['StartGame']
 		self.data.controller.activate(act)
+
+	def major_enter(self):
+		self.selected_major = (self.selected_major + 1) % len(majors.MAJORS)
+		self.student_major.text = "Major: %s" % \
+			majors.MAJORS[self.selected_major].title()
 
 
 class PreGame:
