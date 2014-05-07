@@ -59,6 +59,8 @@ class Combatant:
 			if d < 0.5:
 				if proj.effect == 'damage':
 					self.hp -= 1
+				elif proj.effect == 'heal':
+					self.hp += 1
 				else:
 					raise NotImplementedError(proj.effect)
 
@@ -87,6 +89,8 @@ class Combatant:
 		for i in spell.effects:
 			if i == 'damage':
 				Projectile(self.enemy_target, i, 1, "DamageProjectile", projloc)
+			elif i == 'heal':
+				Projectile(self.ally_target, i, 1, "DamageProjectile", projloc)
 			else:
 				raise NotImplementedError(i)
 
