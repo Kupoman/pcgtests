@@ -38,6 +38,7 @@ class Combatant:
 	def __init__(self, kxobj):
 		self.object = kxobj
 		self.stamina = 0
+		self.sratemod = 1
 		self.hp =  self.maxhp = 3
 		self.dodging = False
 
@@ -51,8 +52,11 @@ class Combatant:
 		self._inbound = []
 
 	def update(self, dt):
-		self.stamina += self.STAMINA_RATE * dt
+		self.stamina += self.STAMINA_RATE * self.sratemod * dt
 		self.stamina = min(self.stamina, 1.0)
+
+		self.sratemod -= (self.sratemod - 1.0) * 0.002
+		print(self.sratemod)
 
 		for proj in self._inbound[:]:
 			d = proj.distance
@@ -61,6 +65,10 @@ class Combatant:
 					self.hp -= 1
 				elif proj.effect == 'heal':
 					self.hp += 1
+				elif proj.effect == 'slow':
+					self.sratemod -= 0.3
+				elif proj.effect == 'haste':
+					self.sratemod += 0.3
 				else:
 					raise NotImplementedError(proj.effect)
 
@@ -90,6 +98,10 @@ class Combatant:
 			if i == 'damage':
 				Projectile(self.enemy_target, i, 1, "DamageProjectile", projloc)
 			elif i == 'heal':
+				Projectile(self.ally_target, i, 1, "DamageProjectile", projloc)
+			elif i == 'slow':
+				Projectile(self.ally_target, i, 1, "DamageProjectile", projloc)
+			elif i == 'haste':
 				Projectile(self.ally_target, i, 1, "DamageProjectile", projloc)
 			else:
 				raise NotImplementedError(i)
