@@ -1,10 +1,17 @@
 from bge import events, logic
-import enum
 import os
 import sys
 
+## For now, don't use enum to increase compatibility
+# import enum
+# STATUS = enum.Enum('status', 'ACTIVE PRESS RELEASE INACTIVE')
 
-STATUS = enum.Enum('status', 'ACTIVE PRESS RELEASE INACTIVE')
+
+class STATUS:
+	ACTIVE = 0
+	PRESS = 1
+	RELEASE = 2
+	INACTIVE = 4
 
 
 _BGE_STATUS_MAP = {
