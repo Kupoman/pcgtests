@@ -20,10 +20,33 @@ class HUDLayout(bgui_bge_utils.Layout):
 		super().__init__(sys, data)
 
 		self.dmap = data["dmap"]
+		self.player = data["player"]
 		self.map_texture = MapTexture(data["dmap"])
 		self.map = bgui.Image(self, None, size=[0, 0.355], aspect=1,
 			pos=[.7815, .61])
 		self.map._texture = self.map_texture
+		dot = bgui.Frame(self.map, size=[0.015, 0.015], pos=[0.5, 0.5])
+		dot.colors = [[0.6, 0.0, 0.0, 0.85]] * 4
+
+	def update(self):
+		player_uv = self.player.tile_position.copy()
+		player_uv[0] /= self.dmap._img_width
+		player_uv[1] /= self.dmap._img_height
+
+		view_width = 0.75
+
+		uvs = [[0,0], [0,0], [0,0], [0,0]]
+		uvs[0][0] = player_uv[0] - view_width
+		uvs[0][1] = player_uv[1] - view_width
+		uvs[1][0] = player_uv[0] + view_width
+		uvs[1][1] = player_uv[1] - view_width
+		uvs[2][0] = player_uv[0] + view_width
+		uvs[2][1] = player_uv[1] + view_width
+		uvs[3][0] = player_uv[0] - view_width
+		uvs[3][1] = player_uv[1] + view_width
+
+		self.map.texco = uvs
+
 
 class MapTexture:
 	def __init__(self, dmap):
@@ -44,6 +67,8 @@ class MapTexture:
 			0, GL_RGBA, GL_UNSIGNED_BYTE, buffer)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP)
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP)
 
 	def __del__(self):
 		glDeleteTextures((self._id,))
@@ -174,6 +199,7 @@ def init(cont):
 
 def update(cont):
 	main = bge.logic.getCurrentScene().objects["Main"]
+	main["ui"].run()
 
 	# Just in case init hasn't been called yet
 	if "player" not in main:
