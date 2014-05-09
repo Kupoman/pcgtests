@@ -15,6 +15,42 @@ import scripts.spells as Spells
 
 ENCOUNTER_DISTANCE = 1.25
 
+class HUDLayout(bgui_bge_utils.Layout):
+	def __init__(self, sys, data):
+		super().__init__(sys, data)
+
+		self.dmap = data["dmap"]
+		self.map_texture = MapTexture(data["dmap"])
+		self.map = bgui.Image(self, None, size=[0, 0.355], aspect=1,
+			pos=[.7815, .61])
+		self.map._texture = self.map_texture
+
+class MapTexture:
+	def __init__(self, dmap):
+		# Needed for compatibility with the bgui image module
+		self.interp_mode = 0
+
+		def _add_alpha(color):
+			alpha = 255
+			if color[0] == 0 and color[1] == 0 and color[2] == 0:
+				alpha = 64
+			return (color[0], color[1], color[2], alpha)
+
+		img_data = [_add_alpha(i) for i in dmap._img_data]
+		buffer = Buffer(GL_BYTE, (dmap._img_width*dmap._img_height, 4), img_data)
+		self._id = glGenTextures(1)
+		glBindTexture(GL_TEXTURE_2D, self._id)
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, dmap._img_width, dmap._img_height,
+			0, GL_RGBA, GL_UNSIGNED_BYTE, buffer)
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+
+	def __del__(self):
+		glDeleteTextures((self._id,))
+
+	def bind(self):
+		glBindTexture(GL_TEXTURE_2D, self._id)
+
 
 class SpellLayout(bgui_bge_utils.Layout):
 	def __init__(self, sys, data):
@@ -133,6 +169,7 @@ def init(cont):
 
 	# UI
 	main["ui"] = bgui_bge_utils.System()
+	main["ui"].load_layout(HUDLayout, main)
 
 
 def update(cont):

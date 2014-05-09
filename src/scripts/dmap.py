@@ -26,17 +26,15 @@ class DungeonMap:
 
 				color = (0, 0, 0)
 				if tile in ('#', '*', '$') or tile.isdigit():
+					color = (255, 255, 255)
 					tpos = Vector((x - sw / 2, y - sh / 2, -random.random() * 0.1))
 					engine.add_object("DungeonTile", tpos)
 
-					if tile == '#':
-						color = (255, 255, 255)
-					elif tile == '$':
+					if tile == '$':
 						color = (128, 128, 128)
 						enc = engine.add_object("MonsterSpawn", tpos + Vector((0, 0, 1.75)))
 						self.encounters.append(enc)
 					elif tile == '*':
-						color = (255, 255, 255)
 						self.player_start_loc = (x, y)
 						engine.add_object("ClayGolemArm", (tpos.x, tpos.y, 0.75))
 					elif tile.isdigit():
