@@ -118,14 +118,28 @@ class InputSystem:
 		if self._joyconf is not None:
 			# Translate raw events to our generic events
 			gevts = {}
-			for btn in logic.joysticks[0].activeButtons:
-				gevtlist = self._joyconf.get('BUTTON.'+str(btn))
+			def add_gevt(name, evttype):
+				gevtlist = self._joyconf.get(name)
 
 				if gevtlist is not None:
 					for gevt in gevtlist:
 						gevts[gevt] = STATUS.ACTIVE if gevt in self._last_joy_events else STATUS.PRESS
 				else:
-					print("Warning, unmapped button: {0}".format(btn))
+					print("Warning, unmapped {0}: {1}".format(name, evttype))
+
+			for btn in logic.joysticks[0].activeButtons:
+				add_gevt('BUTTON.' + str(btn), 'button')
+
+			for idx, hat in enumerate(logic.joysticks[0].hatValues):
+				add_gevt('HAT.' + str(idx) + "." + str(hat), 'hat')
+
+			for axis, value in enumerate(logic.joysticks[0].axisValues):
+				if value > 0.1:
+					print(value)
+					add_gevt('AXIS.' + str(axis) + '.POS', 'axis')
+				elif value < -0.1:
+					print(value)
+					add_gevt('AXIS.' + str(axis) + '.NEG', 'axis')
 
 			# Handle RELEASE events
 			for evt in self._last_joy_events:
