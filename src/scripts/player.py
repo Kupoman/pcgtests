@@ -3,8 +3,21 @@ import time
 import mathutils
 
 from scripts.player_data import PlayerData
+from scripts import input
 
 ENCOUNTER_DISTANCE = 1.25
+
+
+import io
+isconf = io.StringIO(
+"""
+;Config
+MOVE_UP=WKEY
+MOVE_DOWN=SKEY
+MOVE_LEFT=AKEY
+MOVE_RIGHT=DKEY
+"""
+)
 
 class Player:
 	MOVE_TIME = 0.1
@@ -37,14 +50,15 @@ class Player:
 		else:
 			raise NotImplementedError("Action: " + anim)
 
-		
-		
+
+
 def init(cont):
 	scene = bge.logic.getCurrentScene()
 	main = scene.objects["Main"]
 	main["player"] = Player(scene.objects["ClayGolemArm"])
 	main["player"].tile_position = mathutils.Vector(main["dmap"].player_start_loc)
 	main["encounter_scene"] = False
+	main["input_system"] = input.InputSystem(isconf)
 
 	# Make sure we always have a PlayerData
 	if "player_data" not in bge.logic.globalDict:
@@ -94,20 +108,21 @@ def update(cont):
 			else:
 				player.is_teleporting = False
 
-	if player.move_factor >= player.MOVE_TIME:	
-		events = bge.logic.keyboard.events
+	if player.move_factor >= player.MOVE_TIME:
+		events = main['input_system'].run()
+		# events = bge.logic.keyboard.events
 		target_tile = player.tile_position.copy()
 		
-		if events[bge.events.WKEY] == bge.logic.KX_INPUT_ACTIVE:
+		if events["MOVE_UP"] == input.STATUS.ACTIVE:
 			target_tile += mathutils.Vector((0, 1))
 			player.face((0, 1))
-		elif events[bge.events.AKEY] == bge.logic.KX_INPUT_ACTIVE:
+		if events["MOVE_LEFT"] == input.STATUS.ACTIVE:
 			target_tile += mathutils.Vector((-1, 0))
 			player.face((-1, 0))
-		elif events[bge.events.SKEY] == bge.logic.KX_INPUT_ACTIVE:
+		if events["MOVE_DOWN"] == input.STATUS.ACTIVE:
 			target_tile += mathutils.Vector((0, -1))
 			player.face((0, -1))
-		elif events[bge.events.DKEY] == bge.logic.KX_INPUT_ACTIVE:
+		if events["MOVE_RIGHT"] == input.STATUS.ACTIVE:
 			target_tile += mathutils.Vector((1, 0))
 			player.face((1, 0))
 
