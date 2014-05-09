@@ -1,11 +1,22 @@
 from bge import logic, events
 from bgl import *
-from scripts import engine, spells
+from scripts import engine, spells, input
 import scripts.bgui as bgui
 import scripts.bgui.bge_utils as bgui_bge_utils
 import time
 import random
 
+import io
+isconf = io.StringIO(
+"""
+;Config
+SPELL_ONE=QKEY
+SPELL_TWO=WKEY
+SPELL_THREE=EKEY
+SPELL_FOUR=RKEY
+DODGE=SPACEKEY
+"""
+)
 
 class Projectile:
 	def __init__(self, target, effect, rank, obname, origin):
@@ -225,6 +236,9 @@ class Combat:
 		# Give the player something to shoot at
 		self.player.enemy_target = self.enemies[0]
 
+		# Input
+		self.inputs = input.InputSystem(isconf)
+
 		# UI
 		self.ui = bgui_bge_utils.System()
 		self.ui.load_layout(CombatLayout, self)
@@ -234,7 +248,7 @@ class Combat:
 	def update(self):
 		self.ui.run()
 
-		evts = logic.keyboard.events
+		evts = self.inputs.run()
 
 		dt = time.time() - self.prev_time
 		self.prev_time = time.time()
@@ -258,15 +272,15 @@ class Combat:
 		elif self.player.enemy_target is None:
 			self.player.enemy_target = self.enemies[0]
 
-		if evts[events.QKEY] == logic.KX_INPUT_JUST_ACTIVATED:
+		if evts["SPELL_ONE"] == input.STATUS.PRESS:
 			self.player.use_spell(0)
-		if evts[events.WKEY] == logic.KX_INPUT_JUST_ACTIVATED:
+		if evts["SPELL_TWO"] == input.STATUS.PRESS:
 			self.player.use_spell(1)
-		if evts[events.EKEY] == logic.KX_INPUT_JUST_ACTIVATED:
+		if evts["SPELL_THREE"] == input.STATUS.PRESS:
 			self.player.use_spell(2)
-		if evts[events.RKEY] == logic.KX_INPUT_JUST_ACTIVATED:
+		if evts["SPELL_FOUR"] == input.STATUS.PRESS:
 			self.player.use_spell(3)
-		if evts[events.SPACEKEY] == logic.KX_INPUT_JUST_ACTIVATED:
+		if evts["DODGE"] == input.STATUS.PRESS:
 			self.player.dodge()
 
 
