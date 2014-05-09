@@ -29,6 +29,8 @@ _JOYEVENTS = [
 	"LEFT_TRIGGER",
 	"RIGHT_BUMPER",
 	"RIGHT_TRIGGER",
+
+	"UNUSED",
 ]
 
 
@@ -135,10 +137,8 @@ class InputSystem:
 
 			for axis, value in enumerate(logic.joysticks[0].axisValues):
 				if value > 0.1:
-					print(value)
 					add_gevt('AXIS.' + str(axis) + '.POS', 'axis')
 				elif value < -0.1:
-					print(value)
 					add_gevt('AXIS.' + str(axis) + '.NEG', 'axis')
 
 			# Handle RELEASE events
