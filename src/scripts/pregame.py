@@ -4,10 +4,20 @@ import scripts.bgui as bgui
 import scripts.bgui.bge_utils as bgui_bge_utils
 
 from scripts.player_data import PlayerData
-from scripts import majors
+from scripts import majors, input
 
 from collections import OrderedDict
 import sys
+
+import io
+isconf = io.StringIO(
+"""
+;Config
+ACCEPT=ENTERKEY,SPACEKEY
+DOWN=DOWNARROWKEY
+UP=UPARROWKEY
+"""
+)
 
 
 class Menu(bgui.ListBox):
@@ -44,14 +54,13 @@ class Title(bgui_bge_utils.Layout):
 		self.menu = Menu(self, list(self.menu_options.keys()), size=[0.8, 0.3], pos=[0.15, 0.3])
 
 	def update(self):
-		evts = logic.keyboard.events
+		evts = self.data.inputs.run()
 
-		if evts[events.ENTERKEY] == logic.KX_INPUT_JUST_ACTIVATED or \
-			evts[events.SPACEKEY] == logic.KX_INPUT_JUST_ACTIVATED:
+		if evts["ACCEPT"] == input.STATUS.PRESS:
 			self.menu_select()
-		if evts[events.DOWNARROWKEY] == logic.KX_INPUT_JUST_ACTIVATED:
+		if evts["DOWN"] == input.STATUS.PRESS:
 			self.menu_down()
-		if evts[events.UPARROWKEY] == logic.KX_INPUT_JUST_ACTIVATED:
+		if evts["UP"] == input.STATUS.PRESS:
 			self.menu_up()
 
 	def menu_select(self):
@@ -109,20 +118,20 @@ class NewCharacter(bgui_bge_utils.Layout):
 		self.selected_major = 0
 
 	def update(self):
-		evts = logic.keyboard.events
+		evts = self.data.inputs.run()
 
 		if self.entered:
-			if evts[events.ENTERKEY] == logic.KX_INPUT_JUST_ACTIVATED:
+			if evts["ACCEPT"] == input.STATUS.PRESS:
 				self.entered = False
 				if self.menu_options[self.selected][2]:
 					self.menu_options[self.selected][2]()
 		else:
-			if evts[events.ENTERKEY] == logic.KX_INPUT_JUST_ACTIVATED:
+			if evts["ACCEPT"] == input.STATUS.PRESS:
 				self.entered = self.selected != 1
 				self.menu_options[self.selected][1]()
-			if evts[events.DOWNARROWKEY] == logic.KX_INPUT_JUST_ACTIVATED:
+			if evts["DOWN"] == input.STATUS.PRESS:
 				self.selected = (self.selected + 1) % len(self.menu_options)
-			if evts[events.UPARROWKEY] == logic.KX_INPUT_JUST_ACTIVATED:
+			if evts["UP"] == input.STATUS.PRESS:
 				self.selected -= 1
 				if self.selected < 0:
 					self.selected = 0
@@ -154,6 +163,7 @@ class NewCharacter(bgui_bge_utils.Layout):
 
 class PreGame:
 	def __init__(self, cont):
+		self.inputs = input.InputSystem(isconf)
 		self.ui = bgui_bge_utils.System()
 		self.ui.load_layout(Title, self)
 		self.controller = cont
