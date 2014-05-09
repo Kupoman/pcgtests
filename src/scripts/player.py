@@ -47,8 +47,8 @@ def init(cont):
 	main["player"] = Player(scene.objects["ClayGolemArm"])
 	main["player"].tile_position = mathutils.Vector(main["dmap"].player_start_loc)
 	main["encounter_scene"] = False
-	with open('src/input.conf') as f:
-		main["input_system"] = input.InputSystem(f, 'src/joyconfs')
+	with open(bge.logic.expandPath('//input.conf')) as f:
+		main["input_system"] = input.InputSystem(f, bge.logic.expandPath('//joyconfs'))
 
 	# Make sure we always have a PlayerData
 	if "player_data" not in bge.logic.globalDict:

@@ -226,8 +226,8 @@ class Combat:
 		self.player.enemy_target = self.enemies[0]
 
 		# Input
-		with open('src/input.conf') as f:
-			self.inputs = input.InputSystem(f, 'src/joyconfs')
+		with open(logic.expandPath('//input.conf')) as f:
+			self.inputs = input.InputSystem(f, logic.expandPath('//joyconfs'))
 
 		# UI
 		self.ui = bgui_bge_utils.System()
