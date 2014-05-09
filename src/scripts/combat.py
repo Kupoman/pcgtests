@@ -227,7 +227,7 @@ class Combat:
 
 		# Input
 		with open('src/input.conf') as f:
-			self.inputs = input.InputSystem(f)
+			self.inputs = input.InputSystem(f, 'src/joyconfs')
 
 		# UI
 		self.ui = bgui_bge_utils.System()

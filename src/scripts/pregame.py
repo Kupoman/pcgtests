@@ -154,7 +154,7 @@ class NewCharacter(bgui_bge_utils.Layout):
 class PreGame:
 	def __init__(self, cont):
 		with open('src/input.conf') as f:
-			self.inputs = input.InputSystem(f)
+			self.inputs = input.InputSystem(f, 'src/joyconfs', True)
 		self.ui = bgui_bge_utils.System()
 		self.ui.load_layout(Title, self)
 		self.controller = cont
