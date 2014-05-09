@@ -1,11 +1,87 @@
 import bge
 import time
 import mathutils
+import math
+import random
+
+import scripts.bgui as bgui
+import scripts.bgui.bge_utils as bgui_bge_utils
+
+from scripts.bgui.gl_utils import *
 
 from scripts.player_data import PlayerData
 from scripts import input
+import scripts.spells as Spells
 
 ENCOUNTER_DISTANCE = 1.25
+
+
+class SpellLayout(bgui_bge_utils.Layout):
+	def __init__(self, sys, data):
+		super().__init__(sys, data)
+
+		frame = bgui.Frame(self)
+		frame.colors = [[0.0, 0.0, 0.0, 0.66]] * 4
+
+		spell_list = bge.logic.globalDict['player_data'].spell_list.copy()
+
+		spell_frame = bgui.Frame(self, size=[1.0, 0.3], pos=[0, 0.1],
+			options=bgui.BGUI_CENTERX)
+		dummy = SpellWidget(spell_frame, spell_list[0])
+		width = dummy._base_size[0] / spell_frame._base_size[0]
+		pad = 0.01 / spell_frame._base_size[0]
+		width += pad
+		spell_frame.size = [width * len(spell_list), 0.3]
+		spell_frame._remove_widget(dummy)
+
+		for i, spell in enumerate(spell_list):
+			card = SpellWidget(spell_frame, spell)
+			card.position = [i*1/len(spell_list)+pad/2, 0.0]
+
+		new_list = Spells.generate_set(spell_list, 8)
+		new_frame = bgui.Frame(self, size=[width*len(new_list), 0.3],
+			pos=[0, 0.6], options=bgui.BGUI_CENTERX)
+		for i, spell in enumerate(new_list):
+			card = SpellWidget(new_frame, spell)
+			card.position = [i*1/len(new_list)+pad/2, 0.0]
+
+
+class SpellWidget(bgui.Image):
+	def __init__(self, parent, spell):
+		image_path = bge.logic.expandPath("//assets/textures/ui/spell_card.png")
+		super().__init__(parent, image_path, aspect=2/3)
+
+		self.spell = spell
+
+		bgui.Label(self, text=spell.name, color=[0.9,0.9,0.9,1], pos=[0,.9],
+			pt_size=22, options=bgui.BGUI_CENTERX)
+
+	def _draw(self):
+		super()._draw()
+
+		center = [0,0]
+		center[0] = (self.gl_position[0][0] + self.gl_position[1][0]) / 2.0
+		center[1] = (self.gl_position[1][1] + self.gl_position[2][1]) / 2.0
+		width = abs(self.gl_position[1][0] - self.gl_position[0][0])
+
+		scale = 0.65 * width * 0.5
+
+		angles = [math.radians(a + 22.5) for a in range(0, 361, 45)]
+		values = self.spell.dna.effects+self.spell.dna.costs
+		magnitudes = [scale * max(v, 0.05) for v in values]
+
+		glLineWidth(2.0)
+		glBegin(GL_LINE_STRIP)
+		for i in range(len(angles)):
+			if 3 < i < 8:
+				glColor4f(0.0, 0.0, 0.6, 1.0)
+			else:
+				glColor4f(0.6, 0.0, 0.0, 1.0)
+			x = magnitudes[i%8] * math.cos(angles[i])
+			y = magnitudes[i%8] * math.sin(angles[i])
+			glVertex2f(center[0]+x, center[1]+y)
+		glEnd()
+		glLineWidth(1.0)
 
 
 class Player:
@@ -54,6 +130,9 @@ def init(cont):
 	if "player_data" not in bge.logic.globalDict:
 		print("Using debug player.")
 		bge.logic.globalDict['player_data'] = PlayerData.new("__DEBUG__")
+
+	# UI
+	main["ui"] = bgui_bge_utils.System()
 
 
 def update(cont):
@@ -124,6 +203,10 @@ def update(cont):
 			player.last_move = time.time()
 		else:
 			player.animate("idle")
+
+	events = bge.logic.keyboard.events
+	if events[bge.events.ACCENTGRAVEKEY] == bge.logic.KX_INPUT_JUST_ACTIVATED:
+		main["ui"].toggle_overlay(SpellLayout)
 
 	# Check encounters
 	for i in dmap.encounters[:]:

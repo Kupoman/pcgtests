@@ -1,5 +1,10 @@
 from builtins import property
 import math
+import copy
+import random
+import itertools
+import bisect
+import sys
 
 EFFECTS = ('damage', 'heal', 'slow', 'haste')
 COSTS = ('stamina', 'cast_time', 'cool_down', 'health')
@@ -24,6 +29,32 @@ class SpellDna:
 		self.effects = [0, 0, 0, 0]
 		self.costs = [0, 0, 0, 0]
 		self.cost = 0
+		self.fitness = 0
+
+	@classmethod
+	def generate(cls):
+		sdna = SpellDna()
+		sdna.cost = random.random()
+
+		for i in range(len(sdna.effects)):
+			sdna.effects[i] = random.random()
+		for i in range(len(sdna.costs)):
+			sdna.costs[i] = random.random()
+		sdna.normalize()
+
+		return sdna
+
+	@classmethod
+	def crossover(cls, parents):
+		new_dna = SpellDna()
+		for i in range(len(new_dna.effects)):
+			new_dna.effects[i] = random.choice(parents).effects[i]
+		for i in range(len(new_dna.costs)):
+			new_dna.costs[i] = random.choice(parents).costs[i]
+		new_dna.cost = random.choice(parents).cost
+		new_dna.normalize()
+
+		return new_dna
 
 	def normalize(self):
 		sum = 0
@@ -37,6 +68,32 @@ class SpellDna:
 			sum += self.costs[i]
 		for i in range(len(self.costs)):
 			self.costs[i] /= sum
+
+	def mutate(self, rate):
+		for i in range(len(self.effects)):
+			if random.random() < rate:
+				self.effects[i] = random.uniform(0, 2*self.effects[i])
+		for i in range(len(self.costs)):
+			if random.random() < rate:
+				self.costs[i] = random.uniform(0, 2*self.costs[i])
+		if random.random() < rate:
+			self.cost = random.uniform(0, 2*self.cost)
+			cmax = 1.0 - sys.float_info.epsilon
+			if self.cost > cmax:
+				self.cost = cmax
+
+		self.normalize()
+
+	def update_fitness(self, pool):
+		self.fitness = 0
+		for samp in pool:
+			efit = 0
+			for i in range(len(self.effects)):
+				efit += self.effects[i] * samp.effects[i]
+			cfit = 0
+			for i in range(len(self.costs)):
+				cfit += self.costs[i] * samp.costs[i]
+			self.fitness += efit + cfit
 
 
 class Spell:
@@ -54,7 +111,7 @@ class Spell:
 	@classmethod
 	def from_dna(cls, dna):
 		spell = Spell()
-		spell.dna = dna
+		spell.dna = copy.copy(dna)
 		spell._recalc()
 		return spell
 
@@ -91,3 +148,33 @@ class Spell:
 
 	def __repr__(self):
 		return self.name
+
+
+def weighted_choice(choices, weights):
+	cumdist = list(itertools.accumulate(weights))
+	x = random.random() * cumdist[-1]
+	return choices[bisect.bisect(cumdist, x)]
+
+
+def weighted_sample(choices, weights, n):
+	sample = set()
+	while (len(sample) < n):
+		c = weighted_choice(choices, weights)
+		sample.add(c)
+	return list(sample)
+
+
+def generate_set(pool, n):
+		pop = [SpellDna.generate() for i in range(n)]
+		player_dna = [s.dna for s in pool]
+		for dna in pop:
+			dna.update_fitness(player_dna)
+		for i in range(3):
+			new_pop = [SpellDna.crossover(weighted_sample(pop, [d.fitness for d in pop], 3)) for i in range(n)]
+			for dna in new_pop:
+				dna.mutate(0.5)
+			pop = new_pop
+			for dna in pop:
+				dna.update_fitness(player_dna)
+
+		return [Spell.from_dna(dna) for dna in pop]
