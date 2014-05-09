@@ -72,7 +72,7 @@ class DungeonMap:
 		teleloc = tile_pos
 		if tile in self.telemap:
 			for i in self.telemap[tile]:
-				if tile_pos[0] != i[0] and tile_pos[1] != i[1]:
+				if tile_pos[0] != i[0] or tile_pos[1] != i[1]:
 					teleloc = i
 					break
 
