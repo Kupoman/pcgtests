@@ -86,6 +86,11 @@ class SpellLayout(bgui_bge_utils.Layout):
 
 		spell_list = bge.logic.globalDict['player_data'].spell_list.copy()
 
+		for i in range(4 - len(spell_list)):
+			spell = Spells.Spell.from_dna(Spells.SpellDna())
+			spell.name = "Unused"
+			spell_list.append(spell)
+
 		spell_frame = bgui.Frame(self, size=[1.0, 0.3], pos=[0, 0.1],
 			options=bgui.BGUI_CENTERX)
 		dummy = SpellWidget(spell_frame, spell_list[0])
