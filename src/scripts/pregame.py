@@ -9,16 +9,6 @@ from scripts import majors, input
 from collections import OrderedDict
 import sys
 
-import io
-isconf = io.StringIO(
-"""
-;Config
-ACCEPT=ENTERKEY,SPACEKEY
-DOWN=DOWNARROWKEY
-UP=UPARROWKEY
-"""
-)
-
 
 class Menu(bgui.ListBox):
 	class MenuItemRenderer(bgui.ListBoxRenderer):
@@ -163,7 +153,8 @@ class NewCharacter(bgui_bge_utils.Layout):
 
 class PreGame:
 	def __init__(self, cont):
-		self.inputs = input.InputSystem(isconf)
+		with open('src/input.conf') as f:
+			self.inputs = input.InputSystem(f)
 		self.ui = bgui_bge_utils.System()
 		self.ui.load_layout(Title, self)
 		self.controller = cont

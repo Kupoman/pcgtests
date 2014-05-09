@@ -8,17 +8,6 @@ from scripts import input
 ENCOUNTER_DISTANCE = 1.25
 
 
-import io
-isconf = io.StringIO(
-"""
-;Config
-MOVE_UP=WKEY
-MOVE_DOWN=SKEY
-MOVE_LEFT=AKEY
-MOVE_RIGHT=DKEY
-"""
-)
-
 class Player:
 	MOVE_TIME = 0.1
 
@@ -58,7 +47,8 @@ def init(cont):
 	main["player"] = Player(scene.objects["ClayGolemArm"])
 	main["player"].tile_position = mathutils.Vector(main["dmap"].player_start_loc)
 	main["encounter_scene"] = False
-	main["input_system"] = input.InputSystem(isconf)
+	with open('src/input.conf') as f:
+		main["input_system"] = input.InputSystem(f)
 
 	# Make sure we always have a PlayerData
 	if "player_data" not in bge.logic.globalDict:

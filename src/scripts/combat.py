@@ -6,17 +6,6 @@ import scripts.bgui.bge_utils as bgui_bge_utils
 import time
 import random
 
-import io
-isconf = io.StringIO(
-"""
-;Config
-SPELL_ONE=QKEY
-SPELL_TWO=WKEY
-SPELL_THREE=EKEY
-SPELL_FOUR=RKEY
-DODGE=SPACEKEY
-"""
-)
 
 class Projectile:
 	def __init__(self, target, effect, rank, obname, origin):
@@ -237,7 +226,8 @@ class Combat:
 		self.player.enemy_target = self.enemies[0]
 
 		# Input
-		self.inputs = input.InputSystem(isconf)
+		with open('src/input.conf') as f:
+			self.inputs = input.InputSystem(f)
 
 		# UI
 		self.ui = bgui_bge_utils.System()
