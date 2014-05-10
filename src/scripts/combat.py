@@ -56,7 +56,6 @@ class Combatant:
 		self.stamina = min(self.stamina, 1.0)
 
 		self.sratemod -= (self.sratemod - 1.0) * 0.002
-		print(self.sratemod)
 
 		for proj in self._inbound[:]:
 			d = proj.distance
