@@ -252,13 +252,13 @@ def update(cont):
 		if events["MOVE_UP"] == input.STATUS.ACTIVE:
 			target_tile += mathutils.Vector((0, 1))
 			player.face((0, 1))
-		if events["MOVE_LEFT"] == input.STATUS.ACTIVE:
+		elif events["MOVE_LEFT"] == input.STATUS.ACTIVE:
 			target_tile += mathutils.Vector((-1, 0))
 			player.face((-1, 0))
-		if events["MOVE_DOWN"] == input.STATUS.ACTIVE:
+		elif events["MOVE_DOWN"] == input.STATUS.ACTIVE:
 			target_tile += mathutils.Vector((0, -1))
 			player.face((0, -1))
-		if events["MOVE_RIGHT"] == input.STATUS.ACTIVE:
+		elif events["MOVE_RIGHT"] == input.STATUS.ACTIVE:
 			target_tile += mathutils.Vector((1, 0))
 			player.face((1, 0))
 
