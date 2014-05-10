@@ -245,9 +245,8 @@ def update(cont):
 			else:
 				player.is_teleporting = False
 
+	events = main['input_system'].run()
 	if player.move_factor >= player.MOVE_TIME:
-		events = main['input_system'].run()
-		# events = bge.logic.keyboard.events
 		target_tile = player.tile_position.copy()
 		
 		if events["MOVE_UP"] == input.STATUS.ACTIVE:
@@ -263,17 +262,14 @@ def update(cont):
 			target_tile += mathutils.Vector((1, 0))
 			player.face((1, 0))
 
-		#print(target_tile, player.tile_position)
 		if target_tile != player.tile_position and dmap.valid_tile(target_tile):
-			#print("found new tile")
 			player.tile_target = target_tile
 			player.move_factor = 0
 			player.last_move = time.time()
 		else:
 			player.animate("idle")
 
-	events = bge.logic.keyboard.events
-	if events[bge.events.ACCENTGRAVEKEY] == bge.logic.KX_INPUT_JUST_ACTIVATED:
+	if events["OPEN_MENU"] == input.STATUS.PRESS:
 		main["ui"].toggle_overlay(SpellLayout)
 
 	# Check encounters
