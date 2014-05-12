@@ -272,6 +272,9 @@ def update(cont):
 	if events["OPEN_MENU"] == input.STATUS.PRESS:
 		main["ui"].toggle_overlay(SpellLayout)
 
+	if events["SAVE_PLAYER"] == input.STATUS.PRESS:
+		bge.logic.globalDict["player_data"].save()
+
 	# Check encounters
 	for i in dmap.encounters[:]:
 		d2 = (player._obj.worldPosition - i.worldPosition).length_squared

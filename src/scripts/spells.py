@@ -26,6 +26,7 @@ _NAME_GEN_REP = {
 
 class SpellDna:
 	def __init__(self):
+		self.save_fields = ["effects", "costs", "cost"]
 		self.effects = [0, 0, 0, 0]
 		self.costs = [0, 0, 0, 0]
 		self.cost = 0
