@@ -38,3 +38,20 @@ class PlayerData:
 		with open(SAVE_DIR+"/"+self.name+".save", "w") as fout:
 			json.dump(serial, fout)
 
+	@classmethod
+	def load(cls, name):
+		path = SAVE_DIR + "/" + name + ".save"
+
+		with open(path) as fin:
+			serial = json.load(fin)
+
+		data = PlayerData(serial["name"], serial["major"])
+		data.spell_list = []
+
+		for serial_spell in serial["spell_list"]:
+			dna = spells.SpellDna()
+			for field in dna.save_fields:
+				setattr(dna, field, serial_spell[field])
+			data.spell_list.append(spells.Spell.from_dna(dna))
+
+		return data

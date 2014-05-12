@@ -3,11 +3,12 @@ from bge import logic, render, events
 import scripts.bgui as bgui
 import scripts.bgui.bge_utils as bgui_bge_utils
 
-from scripts.player_data import PlayerData
+from scripts.player_data import PlayerData, SAVE_DIR
 from scripts import majors, input
 
 from collections import OrderedDict
 import sys
+import os
 
 
 class Menu(bgui.ListBox):
@@ -36,7 +37,7 @@ class Title(bgui_bge_utils.Layout):
 
 		self.menu_options = OrderedDict([
 			("New Character", self.new_char),
-			("Load Character", self.new_char),
+			("Load Character", self.load_char),
 			("Exit", self.exit),
 		])
 
@@ -68,6 +69,9 @@ class Title(bgui_bge_utils.Layout):
 
 	def new_char(self):
 		self.data.ui.load_layout(NewCharacter, self.data)
+
+	def load_char(self):
+		self.data.ui.load_layout(LoadCharacter, self.data)
 
 	def exit(self):
 		logic.endGame()
@@ -149,6 +153,42 @@ class NewCharacter(bgui_bge_utils.Layout):
 		self.selected_major = (self.selected_major + 1) % len(majors.MAJORS)
 		self.student_major.text = "Major: %s" % \
 			majors.MAJORS[self.selected_major].title()
+
+
+class LoadCharacter(bgui_bge_utils.Layout):
+	def __init__(self, sys, data):
+		super().__init__(sys, data)
+
+		self.menu_options = [name.replace(".save", "") for name in os.listdir(SAVE_DIR)]
+
+		self.menu = Menu(self, self.menu_options, size=[0.8,0.8],
+			options=bgui.BGUI_CENTERED)
+
+	def update(self):
+		evts = self.data.inputs.run()
+
+		if evts["ACCEPT"] == input.STATUS.PRESS:
+			self.menu_select()
+		if evts["DOWN"] == input.STATUS.PRESS:
+			self.menu_down()
+		if evts["UP"] == input.STATUS.PRESS:
+			self.menu_up()
+
+	def menu_select(self):
+		name = self.menu.selected
+		logic.globalDict['player_data'] = PlayerData.load(name)
+		act = self.data.controller.actuators['StartGame']
+		self.data.controller.activate(act)
+
+	def menu_down(self):
+		sidx = self.menu.items.index(self.menu.selected)
+		sidx = (sidx + 1) % len(self.menu_options)
+		self.menu.selected = self.menu.items[sidx]
+
+	def menu_up(self):
+		sidx = self.menu.items.index(self.menu.selected)
+		sidx -= 1
+		self.menu.selected = self.menu.items[sidx]
 
 
 class PreGame:
