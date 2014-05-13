@@ -91,6 +91,7 @@ class SpellLayout(bgui_bge_utils.Layout):
 			spell.name = "Unused"
 			spell_list.append(spell)
 
+		# Player Spells
 		spell_frame = bgui.Frame(self, size=[1.0, 0.3], pos=[0, 0.1],
 			options=bgui.BGUI_CENTERX)
 		dummy = SpellWidget(spell_frame, spell_list[0])
@@ -104,12 +105,29 @@ class SpellLayout(bgui_bge_utils.Layout):
 			card = SpellWidget(spell_frame, spell)
 			card.position = [i*1/len(spell_list)+pad/2, 0.0]
 
+		# Generated Spells
 		new_list = Spells.generate_set(spell_list, 8)
 		new_frame = bgui.Frame(self, size=[width*len(new_list), 0.3],
 			pos=[0, 0.6], options=bgui.BGUI_CENTERX)
 		for i, spell in enumerate(new_list):
 			card = SpellWidget(new_frame, spell)
 			card.position = [i*1/len(new_list)+pad/2, 0.0]
+
+		# Effects key
+		texture_dir = bge.logic.expandPath("//assets/textures/ui/")
+		img = bgui.Image(self, texture_dir+"spell_key_effects.png", aspect=2/3,
+			size=[0, 0.3], pos=[0.07, 0.1])
+		bgui.Label(img, text="Effects", color=[0.9,0.9,0.9,1], pos=[0,.9],
+			pt_size=22, options=bgui.BGUI_CENTERX)
+
+		# Costs Key
+		img = bgui.Image(self, texture_dir+"spell_key_costs.png", aspect=2/3,
+			size=[0, 0.3], pos=[0.07, 0.1])
+		width = img._base_size[0] / self._base_size[0]
+		print(width)
+		img.position = [0.93 - width, 0.1]
+		bgui.Label(img, text="Costs", color=[0.9,0.9,0.9,1], pos=[0,.9],
+			pt_size=22, options=bgui.BGUI_CENTERX)
 
 
 class SpellWidget(bgui.Image):
@@ -227,7 +245,7 @@ def update(cont):
 		player.last_move = time.time()
 		if player.move_factor > player.MOVE_TIME or player.move_factor / player.MOVE_TIME > 0.95:
 			player.move_factor = player.MOVE_TIME
-		
+
 		kworld = mathutils.Vector(dmap.tile_to_world(player.tile_position))
 		vworld = mathutils.Vector(dmap.tile_to_world(player.tile_target))
 
@@ -248,7 +266,7 @@ def update(cont):
 	events = main['input_system'].run()
 	if player.move_factor >= player.MOVE_TIME:
 		target_tile = player.tile_position.copy()
-		
+
 		if events["MOVE_UP"] == input.STATUS.ACTIVE:
 			target_tile += mathutils.Vector((0, 1))
 			player.face((0, 1))
