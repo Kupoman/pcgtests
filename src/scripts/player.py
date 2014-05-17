@@ -92,25 +92,25 @@ class SpellLayout(bgui_bge_utils.Layout):
 			spell_list.append(spell)
 
 		# Player Spells
-		spell_frame = bgui.Frame(self, size=[1.0, 0.3], pos=[0, 0.1],
+		self.spell_frame = bgui.Frame(self, size=[1.0, 0.3], pos=[0, 0.1],
 			options=bgui.BGUI_CENTERX)
-		dummy = SpellWidget(spell_frame, spell_list[0])
-		width = dummy._base_size[0] / spell_frame._base_size[0]
-		pad = 0.01 / spell_frame._base_size[0]
+		dummy = SpellWidget(self.spell_frame, spell_list[0], -1)
+		width = dummy._base_size[0] / self.spell_frame._base_size[0]
+		pad = 0.01 / self.spell_frame._base_size[0]
 		width += pad
-		spell_frame.size = [width * len(spell_list), 0.3]
-		spell_frame._remove_widget(dummy)
+		self.spell_frame.size = [width * len(spell_list), 0.3]
+		self.spell_frame._remove_widget(dummy)
 
 		for i, spell in enumerate(spell_list):
-			card = SpellWidget(spell_frame, spell)
+			card = SpellWidget(self.spell_frame, spell, i)
 			card.position = [i*1/len(spell_list)+pad/2, 0.0]
 
 		# Generated Spells
 		new_list = Spells.generate_set(spell_list, 8)
-		new_frame = bgui.Frame(self, size=[width*len(new_list), 0.3],
+		self.new_frame = bgui.Frame(self, size=[width*len(new_list), 0.3],
 			pos=[0, 0.6], options=bgui.BGUI_CENTERX)
 		for i, spell in enumerate(new_list):
-			card = SpellWidget(new_frame, spell)
+			card = SpellWidget(self.new_frame, spell, i)
 			card.position = [i*1/len(new_list)+pad/2, 0.0]
 
 		# Effects key
@@ -124,24 +124,65 @@ class SpellLayout(bgui_bge_utils.Layout):
 		img = bgui.Image(self, texture_dir+"spell_key_costs.png", aspect=2/3,
 			size=[0, 0.3], pos=[0.07, 0.1])
 		width = img._base_size[0] / self._base_size[0]
-		print(width)
 		img.position = [0.93 - width, 0.1]
 		bgui.Label(img, text="Costs", color=[0.9,0.9,0.9,1], pos=[0,.9],
 			pt_size=22, options=bgui.BGUI_CENTERX)
 
+		# Selector
+		self.idx = 0
+		selected = self.new_frame.children[0]
+		self.selector = bgui.Image(selected, texture_dir+"spell_selector.png",
+			name="selector")
+		self.curframe = self.new_frame
+		self.genidx = 0
+
+	def update(self):
+		events = self.data["input_system"].run()
+
+		size = len(self.curframe.children)
+
+		if events["LEFT"] == input.STATUS.PRESS:
+			self.idx = (size + self.idx - 1) % size
+		if events["RIGHT"] == input.STATUS.PRESS:
+			self.idx = (self.idx + 1) % size
+		if events["ACCEPT"] == input.STATUS.PRESS:
+			if self.curframe == self.new_frame:
+				self.curframe = self.spell_frame
+				self.genidx = self.idx
+			else:
+				spell_list = bge.logic.globalDict['player_data'].spell_list
+				scard = self.spell_frame.children[self.idx]
+				gcard = self.new_frame.children[self.genidx]
+				if self.idx == len(spell_list):
+					spell_list.append(gcard.spell)
+				elif self.idx > len(spell_list):
+					offset = self.idx - len(spell_list)
+					spell_list.append(gcard.spell)
+					print("Gap detected!, offset ==", offset)
+					scard = self.spell_frame.children[self.idx-offset]
+				else:
+					spell_list[self.idx] = gcard.spell
+				scard.spell, gcard.spell = gcard.spell, scard.spell
+				self.curframe = self.new_frame
+			self.idx = 0
+
+		self.selector.parent = self.curframe.children[self.idx]
+
 
 class SpellWidget(bgui.Image):
-	def __init__(self, parent, spell):
+	def __init__(self, parent, spell, index):
 		image_path = bge.logic.expandPath("//assets/textures/ui/spell_card.png")
-		super().__init__(parent, image_path, aspect=2/3)
+		super().__init__(parent, image_path, name=index, aspect=2/3)
 
 		self.spell = spell
 
-		bgui.Label(self, text=spell.name, color=[0.9,0.9,0.9,1], pos=[0,.9],
-			pt_size=22, options=bgui.BGUI_CENTERX)
+		self.name_lbl = bgui.Label(self, text=spell.name, color=[0.9,0.9,0.9,1],
+			pos=[0,.9], pt_size=22, options=bgui.BGUI_CENTERX)
 
 	def _draw(self):
 		super()._draw()
+
+		self.name_lbl.text = self.spell.name
 
 		center = [0,0]
 		center[0] = (self.gl_position[0][0] + self.gl_position[1][0]) / 2.0
@@ -218,6 +259,7 @@ def init(cont):
 	# UI
 	main["ui"] = bgui_bge_utils.System()
 	main["ui"].load_layout(HUDLayout, main)
+	main["in_menu"] = False
 
 
 def update(cont):
@@ -267,18 +309,19 @@ def update(cont):
 	if player.move_factor >= player.MOVE_TIME:
 		target_tile = player.tile_position.copy()
 
-		if events["MOVE_UP"] == input.STATUS.ACTIVE:
-			target_tile += mathutils.Vector((0, 1))
-			player.face((0, 1))
-		elif events["MOVE_LEFT"] == input.STATUS.ACTIVE:
-			target_tile += mathutils.Vector((-1, 0))
-			player.face((-1, 0))
-		elif events["MOVE_DOWN"] == input.STATUS.ACTIVE:
-			target_tile += mathutils.Vector((0, -1))
-			player.face((0, -1))
-		elif events["MOVE_RIGHT"] == input.STATUS.ACTIVE:
-			target_tile += mathutils.Vector((1, 0))
-			player.face((1, 0))
+		if not main["in_menu"]:
+			if events["MOVE_UP"] == input.STATUS.ACTIVE:
+				target_tile += mathutils.Vector((0, 1))
+				player.face((0, 1))
+			elif events["MOVE_LEFT"] == input.STATUS.ACTIVE:
+				target_tile += mathutils.Vector((-1, 0))
+				player.face((-1, 0))
+			elif events["MOVE_DOWN"] == input.STATUS.ACTIVE:
+				target_tile += mathutils.Vector((0, -1))
+				player.face((0, -1))
+			elif events["MOVE_RIGHT"] == input.STATUS.ACTIVE:
+				target_tile += mathutils.Vector((1, 0))
+				player.face((1, 0))
 
 		if target_tile != player.tile_position and dmap.valid_tile(target_tile):
 			player.tile_target = target_tile
@@ -288,7 +331,8 @@ def update(cont):
 			player.animate("idle")
 
 	if events["OPEN_MENU"] == input.STATUS.PRESS:
-		main["ui"].toggle_overlay(SpellLayout)
+		main["ui"].toggle_overlay(SpellLayout, main)
+		main["in_menu"] = not main["in_menu"]
 
 	if events["SAVE_PLAYER"] == input.STATUS.PRESS:
 		bge.logic.globalDict["player_data"].save()
