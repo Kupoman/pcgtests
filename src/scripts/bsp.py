@@ -1,6 +1,7 @@
 from collections import namedtuple
 import random
 import time
+import sys
 
 
 class V:
@@ -16,6 +17,10 @@ class V:
 def dfs(dmap):
 	G = {}
 
+	rlimit = sys.getrecursionlimit()
+	# print(rlimit, len(dmap)*len(dmap[0]))
+	sys.setrecursionlimit(len(dmap) * len(dmap[0]))
+
 	for iy, vy in enumerate(dmap):
 		for ix, vy in enumerate(vy):
 			if vy in ('#', '$'):
@@ -29,6 +34,7 @@ def dfs(dmap):
 			connected_components.append(dfs_visit(dmap, G, v, cc))
 			cc += 1
 
+	sys.setrecursionlimit(rlimit)
 	return connected_components
 
 

@@ -8,8 +8,8 @@ from . import engine
 
 
 class DungeonMap:
-	def __init__(self, sw, sh):
-		bsp_data = bsp.gen(sw, sh)
+	def __init__(self, sw, sh, min_roomx, min_roomy):
+		bsp_data = bsp.gen(sw, sh, min_roomx, min_roomy)
 		self._bsp_data = bsp_data
 		self._img_data = []
 		self._img_height = len(bsp_data)
@@ -88,7 +88,7 @@ _map = None
 def init(cont):
 	global _map
 	main = cont.owner
-	_map = DungeonMap(50, 50)
+	_map = DungeonMap(50, 50, 5, 5)
 
 	main["dmap"] = _map
 
