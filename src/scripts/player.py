@@ -350,4 +350,5 @@ def update(cont):
 			main["encounter_scene"] = True
 
 	if not main['encounter_scene'] and not dmap.encounters:
+		bge.logic.globalDict["player_data"].save()
 		bge.logic.getCurrentScene().restart()
