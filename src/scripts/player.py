@@ -348,3 +348,6 @@ def update(cont):
 			bge.logic.addScene("Combat")
 			bge.logic.getCurrentScene().suspend()
 			main["encounter_scene"] = True
+
+	if not main['encounter_scene'] and not dmap.encounters:
+		bge.logic.getCurrentScene().restart()
