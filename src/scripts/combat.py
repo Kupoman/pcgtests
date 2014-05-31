@@ -256,7 +256,6 @@ class Combat:
 
 		if not self.enemies or self.player.hp <= 0:
 			logic.getSceneList()[0].resume()
-			self.main["encounter_scene"] = False
 			logic.getCurrentScene().end()
 		elif self.player.enemy_target is None:
 			self.player.enemy_target = self.enemies[0]

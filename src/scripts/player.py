@@ -15,13 +15,14 @@ import scripts.spells as Spells
 
 ENCOUNTER_DISTANCE = 1.25
 
+
 class HUDLayout(bgui_bge_utils.Layout):
 	def __init__(self, sys, data):
 		super().__init__(sys, data)
 
-		self.dmap = data["dmap"]
-		self.player = data["player"]
-		self.map_texture = MapTexture(data["dmap"])
+		self.dmap = data.dmap
+		self.player = data.player
+		self.map_texture = MapTexture(data.dmap)
 		self.map = bgui.Image(self, None, size=[0, 0.355], aspect=1,
 			pos=[.7815, .61])
 		self.map._texture = self.map_texture
@@ -137,7 +138,7 @@ class SpellLayout(bgui_bge_utils.Layout):
 		self.genidx = 0
 
 	def update(self):
-		events = self.data["input_system"].run()
+		events = self.data.input_system.run()
 
 		size = len(self.curframe.children)
 
@@ -241,114 +242,117 @@ class Player:
 			raise NotImplementedError("Action: " + anim)
 
 
+class Exploration:
+	def __init__(self):
+		scene = bge.logic.getCurrentScene()
+		main = scene.objects["Main"]
+		self.dmap = main['dmap']
+		self.player = Player(scene.objects["ClayGolemArm"])
+		self.player.tile_position = mathutils.Vector(main["dmap"].player_start_loc)
+		with open(bge.logic.expandPath('//input.conf')) as f:
+			self.input_system = input.InputSystem(f, bge.logic.expandPath('//joyconfs'))
+
+		# Make sure we always have a PlayerData
+		if "player_data" not in bge.logic.globalDict:
+			print("Using debug player.")
+			bge.logic.globalDict['player_data'] = PlayerData.new("__DEBUG__")
+
+		# UI
+		self.ui = bgui_bge_utils.System()
+		self.ui.load_layout(HUDLayout, self)
+		self.in_menu = False
+
+	def update(self):
+		main = bge.logic.getCurrentScene().objects["Main"]
+		self.ui.run()
+
+		dmap = self.dmap
+		player = self.player
+		cam = bge.logic.getCurrentScene().active_camera
+
+		if player.cam_target:
+			cam.worldPosition.xy = cam.worldPosition.xy.lerp(player.cam_target, 0.1)
+
+		if player.move_factor < player.MOVE_TIME:
+			#print("Move to", player.tile_target, "from", player.tile_position)
+			player.animate("moving")
+			player.move_factor += time.time() - player.last_move
+			player.last_move = time.time()
+			if player.move_factor > player.MOVE_TIME or player.move_factor / player.MOVE_TIME > 0.95:
+				player.move_factor = player.MOVE_TIME
+
+			kworld = mathutils.Vector(dmap.tile_to_world(player.tile_position))
+			vworld = mathutils.Vector(dmap.tile_to_world(player.tile_target))
+
+			player._obj.worldPosition.xy = kworld.lerp(vworld, player.move_factor/player.MOVE_TIME)
+
+			player.cam_target = player.orig_cam.xy + player._obj.worldPosition.xy
+
+			if player.move_factor == player.MOVE_TIME:
+				player.tile_position = player.tile_target
+
+				if not player.is_teleporting and dmap.is_teleporter(player.tile_target):
+					player.tile_target = mathutils.Vector(dmap.get_teleporter_loc(player.tile_target))
+					player.move_factor = 0
+					player.is_teleporting = True
+				else:
+					player.is_teleporting = False
+
+		events = self.input_system.run()
+		if player.move_factor >= player.MOVE_TIME:
+			target_tile = player.tile_position.copy()
+
+			if not self.in_menu:
+				if events["MOVE_UP"] == input.STATUS.ACTIVE:
+					target_tile += mathutils.Vector((0, 1))
+					player.face((0, 1))
+				elif events["MOVE_LEFT"] == input.STATUS.ACTIVE:
+					target_tile += mathutils.Vector((-1, 0))
+					player.face((-1, 0))
+				elif events["MOVE_DOWN"] == input.STATUS.ACTIVE:
+					target_tile += mathutils.Vector((0, -1))
+					player.face((0, -1))
+				elif events["MOVE_RIGHT"] == input.STATUS.ACTIVE:
+					target_tile += mathutils.Vector((1, 0))
+					player.face((1, 0))
+
+			if target_tile != player.tile_position and dmap.valid_tile(target_tile):
+				player.tile_target = target_tile
+				player.move_factor = 0
+				player.last_move = time.time()
+			else:
+				player.animate("idle")
+
+		if events["OPEN_MENU"] == input.STATUS.PRESS:
+			self.ui.toggle_overlay(SpellLayout, self)
+			self.in_menu = not self.in_menu
+
+		if events["SAVE_PLAYER"] == input.STATUS.PRESS:
+			bge.logic.globalDict["player_data"].save()
+
+		# Check encounters
+		for i in dmap.encounters[:]:
+			d2 = (player._obj.worldPosition - i.worldPosition).length_squared
+
+			if d2 < ENCOUNTER_DISTANCE**2:
+				print("Encounter!")
+				dmap.encounters.remove(i)
+				i.endObject()
+				bge.logic.addScene("Combat")
+				bge.logic.getCurrentScene().suspend()
+
+		if not dmap.encounters:
+			bge.logic.globalDict["player_data"].save()
+			bge.logic.getCurrentScene().restart()
+
 
 def init(cont):
-	scene = bge.logic.getCurrentScene()
-	main = scene.objects["Main"]
-	main["player"] = Player(scene.objects["ClayGolemArm"])
-	main["player"].tile_position = mathutils.Vector(main["dmap"].player_start_loc)
-	main["encounter_scene"] = False
-	with open(bge.logic.expandPath('//input.conf')) as f:
-		main["input_system"] = input.InputSystem(f, bge.logic.expandPath('//joyconfs'))
-
-	# Make sure we always have a PlayerData
-	if "player_data" not in bge.logic.globalDict:
-		print("Using debug player.")
-		bge.logic.globalDict['player_data'] = PlayerData.new("__DEBUG__")
-
-	# UI
-	main["ui"] = bgui_bge_utils.System()
-	main["ui"].load_layout(HUDLayout, main)
-	main["in_menu"] = False
+	cont.owner['exploration'] = Exploration()
 
 
 def update(cont):
-	main = bge.logic.getCurrentScene().objects["Main"]
-	main["ui"].run()
-
-	# Just in case init hasn't been called yet
-	if "player" not in main:
-		return
-
-	if main["encounter_scene"]:
-		return
-
-	dmap = main["dmap"]
-	player = main["player"]
-	cam = bge.logic.getCurrentScene().active_camera
-
-	if player.cam_target:
-		cam.worldPosition.xy = cam.worldPosition.xy.lerp(player.cam_target, 0.1)
-
-	if player.move_factor < player.MOVE_TIME:
-		#print("Move to", player.tile_target, "from", player.tile_position)
-		player.animate("moving")
-		player.move_factor += time.time() - player.last_move
-		player.last_move = time.time()
-		if player.move_factor > player.MOVE_TIME or player.move_factor / player.MOVE_TIME > 0.95:
-			player.move_factor = player.MOVE_TIME
-
-		kworld = mathutils.Vector(dmap.tile_to_world(player.tile_position))
-		vworld = mathutils.Vector(dmap.tile_to_world(player.tile_target))
-
-		player._obj.worldPosition.xy = kworld.lerp(vworld, player.move_factor/player.MOVE_TIME)
-
-		player.cam_target = player.orig_cam.xy + player._obj.worldPosition.xy
-
-		if player.move_factor == player.MOVE_TIME:
-			player.tile_position = player.tile_target
-
-			if not player.is_teleporting and dmap.is_teleporter(player.tile_target):
-				player.tile_target = mathutils.Vector(dmap.get_teleporter_loc(player.tile_target))
-				player.move_factor = 0
-				player.is_teleporting = True
-			else:
-				player.is_teleporting = False
-
-	events = main['input_system'].run()
-	if player.move_factor >= player.MOVE_TIME:
-		target_tile = player.tile_position.copy()
-
-		if not main["in_menu"]:
-			if events["MOVE_UP"] == input.STATUS.ACTIVE:
-				target_tile += mathutils.Vector((0, 1))
-				player.face((0, 1))
-			elif events["MOVE_LEFT"] == input.STATUS.ACTIVE:
-				target_tile += mathutils.Vector((-1, 0))
-				player.face((-1, 0))
-			elif events["MOVE_DOWN"] == input.STATUS.ACTIVE:
-				target_tile += mathutils.Vector((0, -1))
-				player.face((0, -1))
-			elif events["MOVE_RIGHT"] == input.STATUS.ACTIVE:
-				target_tile += mathutils.Vector((1, 0))
-				player.face((1, 0))
-
-		if target_tile != player.tile_position and dmap.valid_tile(target_tile):
-			player.tile_target = target_tile
-			player.move_factor = 0
-			player.last_move = time.time()
-		else:
-			player.animate("idle")
-
-	if events["OPEN_MENU"] == input.STATUS.PRESS:
-		main["ui"].toggle_overlay(SpellLayout, main)
-		main["in_menu"] = not main["in_menu"]
-
-	if events["SAVE_PLAYER"] == input.STATUS.PRESS:
-		bge.logic.globalDict["player_data"].save()
-
-	# Check encounters
-	for i in dmap.encounters[:]:
-		d2 = (player._obj.worldPosition - i.worldPosition).length_squared
-
-		if d2 < ENCOUNTER_DISTANCE**2:
-			print("Encounter!")
-			dmap.encounters.remove(i)
-			i.endObject()
-			bge.logic.addScene("Combat")
-			bge.logic.getCurrentScene().suspend()
-			main["encounter_scene"] = True
-
-	if not main['encounter_scene'] and not dmap.encounters:
-		bge.logic.globalDict["player_data"].save()
-		bge.logic.getCurrentScene().restart()
+	try:
+		cont.owner['exploration'].update()
+	except KeyError:
+		print("Exploration: KeyError")
+		init(cont)
