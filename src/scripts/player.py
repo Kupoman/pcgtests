@@ -10,6 +10,7 @@ import scripts.bgui.bge_utils as bgui_bge_utils
 from scripts.bgui.gl_utils import *
 
 from scripts.player_data import PlayerData
+from scripts.dmap import DungeonMap
 from scripts import input
 import scripts.spells as Spells
 
@@ -245,10 +246,9 @@ class Player:
 class Exploration:
 	def __init__(self):
 		scene = bge.logic.getCurrentScene()
-		main = scene.objects["Main"]
-		self.dmap = main['dmap']
+		self.dmap = DungeonMap(50, 50, 5, 5)
 		self.player = Player(scene.objects["ClayGolemArm"])
-		self.player.tile_position = mathutils.Vector(main["dmap"].player_start_loc)
+		self.player.tile_position = mathutils.Vector(self.dmap.player_start_loc)
 		with open(bge.logic.expandPath('//input.conf')) as f:
 			self.input_system = input.InputSystem(f, bge.logic.expandPath('//joyconfs'))
 
@@ -263,7 +263,6 @@ class Exploration:
 		self.in_menu = False
 
 	def update(self):
-		main = bge.logic.getCurrentScene().objects["Main"]
 		self.ui.run()
 
 		dmap = self.dmap

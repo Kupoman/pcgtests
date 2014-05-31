@@ -82,16 +82,9 @@ class DungeonMap:
 		return tile != '.'
 
 
-_map = None
-
-
 def init(cont):
-	global _map
-	main = cont.owner
-	_map = DungeonMap(50, 50, 5, 5)
-
-	main["dmap"] = _map
-
+	# Todo: Remove this method next time main.blend is open for modifications.
+	pass
 
 
 def minimap_add(cont):
