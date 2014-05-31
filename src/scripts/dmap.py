@@ -85,22 +85,3 @@ class DungeonMap:
 def init(cont):
 	# Todo: Remove this method next time main.blend is open for modifications.
 	pass
-
-
-def minimap_add(cont):
-	global _map
-	if _map == None:
-		_map = bge.logic.getSceneList()[0].objects["Main"]["dmap"]
-		
-	obj = cont.owner
-	id = bge.texture.materialID(obj, "IMUntitled")
-	object_texture = bge.texture.Texture(obj, id)
-	
-	new_source = bge.texture.ImageBuff()
-	buffer = bgl.Buffer(bgl.GL_BYTE, (_map._img_width* _map._img_height, 3), _map._img_data)
-	new_source.load(buffer, _map._img_width, _map._img_height)
-	
-	obj["map_img"] = object_texture
-	
-	obj["map_img"].source = new_source
-	obj["map_img"].refresh(False)
